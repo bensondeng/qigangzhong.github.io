@@ -28,7 +28,7 @@ author: 刚子
 
 
 
-## 创建线程的三种方式
+## Java语言创建线程的三种方式
 
 ### 1. 通过实现 `Runnable` 接口
 
@@ -151,7 +151,7 @@ public class TestThread {
 > ```
 > 实现Runnable无法返回执行结果，实现Callable无法直接通过Thread包装执行(只能提交给ExecutorService执行)  
 > 而FutureTask兼顾两者优点  
-> ![FutureTask.jpg](/images/thread/FutureTask.jpg)
+> ![FutureTask.jpg](/images/thread/FutureTask.jpg=200x200)
 > ```java
 > FutureTask futureTask = new FutureTask(new Callable<String>() {  
 >            @Override  
