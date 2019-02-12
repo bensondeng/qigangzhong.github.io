@@ -73,7 +73,7 @@ public class TestThread {
       
       RunnableDemo R2 = new RunnableDemo( "Thread-2");
       R2.start();
-   }   
+   }
 }
 ```
 
@@ -126,21 +126,54 @@ public class TestThread {
 
 ### 3. 通过 `Callable` 配合 `Future` 或者 `FutureTask` 创建线程
 
+> a) Runnable/Thread的问题  
 > 通过实现Runnable接口或者继承Thread类这两种方式来启动线程都有个问题，就是无法获取执行结果，实现Callable接口可以解决这个问题
 > 
-> Callable一般配合ExecutorService来使用，通过泛型参数来定义返回的数据类型，ExecutorService提供的submit方法可以执行任务
+> b) Callable  
+> 一般配合ExecutorService来使用，通过泛型参数来定义返回的数据类型，ExecutorService提供的submit方法可以执行Callable实例(任务)
+> ```java 
+> <T> Future<T> submit(Callable<T> task);
+> ```
 > 
-> >  <T> Future<T> submit(Callable<T> task);
-> 
+> c) Future  
 > 返回的Future<T>对象提供了一些有用的方法，其中包含获取执行结果的get方法
+> 
+> *  cancel方法用来取消任务，如果取消任务成功则返回true，如果取消任务失败则返回false。参数mayInterruptIfRunning表示是否允许取消正在执行却没有执行完毕的任务，如果设置true，则表示可以取消正在执行过程中的任务。如果任务已经完成，则无论mayInterruptIfRunning为true还是false，此方法肯定返回false，即如果取消已经完成的任务会返回false；如果任务正在执行，若mayInterruptIfRunning设置为true，则返回true，若mayInterruptIfRunning设置为false，则返回false；如果任务还没有执行，则无论mayInterruptIfRunning为true还是false，肯定返回true
+> * isCancelled方法表示任务是否被取消成功，如果在任务正常完成前被取消成功，则返回 true
+> * isDone方法表示任务是否已经完成，若任务完成，则返回true
+> * get()方法用来获取执行结果，**该方法会产生阻塞，直到结果返回**
+> * get(long timeout, TimeUnit unit)用来获取执行结果，如果在指定时间内，还没获取到结果，就抛出异常
+> 
+> d) FutureTask  
+> ```java 
+> public class FutureTask<V> implements RunnableFuture<V>{}
+> public interface RunnableFuture<V> extends Runnable, Future<V> {}
+> ```
+> 实现Runnable无法返回执行结果，实现Callable无法直接通过Thread包装执行(只能提交给ExecutorService执行)  
+> 而FutureTask兼顾两者优点  
+> ![FutureTask.jpg](/images/thread/FutureTask.jpg)
+> ```java
+> FutureTask futureTask = new FutureTask(new Callable<String>() {  
+>            @Override  
+>            public String call() throws Exception {  
+>                long b = new Date().getTime();  
+>                System.out.println("call begin " + b);  
+>                StringBuilder sb = new StringBuilder();  
+>                for (int i = 0; i < 100000; i++) {  
+>                    sb.append(i).append(",");  
+>                }  
+>                System.out.println("call end " + (new Date().getTime() - b));  
+>                return sb.toString();  
+>            }  
+>        }) );      
+> // 使用futureTask创建一个线程        
+> new Thread(futureTask).start(); 
+> ```
 
-> > cancel方法用来取消任务，如果取消任务成功则返回true，如果取消任务失败则返回false。参数mayInterruptIfRunning表示是否允许取消正在执行却没有执行完毕的任务，如果设置true，则表示可以取消正在执行过程中的任务。如果任务已经完成，则无论mayInterruptIfRunning为true还是false，此方法肯定返回false，即如果取消已经完成的任务会返回false；如果任务正在执行，若mayInterruptIfRunning设置为true，则返回true，若mayInterruptIfRunning设置为false，则返回false；如果任务还没有执行，则无论mayInterruptIfRunning为true还是false，肯定返回true
-> > isCancelled方法表示任务是否被取消成功，如果在任务正常完成前被取消成功，则返回 true
-> > isDone方法表示任务是否已经完成，若任务完成，则返回true
-> > get()方法用来获取执行结果，这个方法会产生阻塞，会一直等到任务执行完毕才返回
-> > get(long timeout, TimeUnit unit)用来获取执行结果，如果在指定时间内，还没获取到结果，就抛出异常
+
 
 ```java
+//Callable+Future
 import java.util.concurrent.*;
 public class Test {
     public static void main(String[] args) {
@@ -178,6 +211,7 @@ class Task implements Callable<Integer>{
 ```
 
 ```java
+//Callable+FutureTask
 import java.util.concurrent.*;
 public class Test {
     public static void main(String[] args) {
@@ -224,7 +258,7 @@ class Task implements Callable<Integer>{
 
 [在Java中使用Callable、Future进行并行编程](https://segmentfault.com/a/1190000012291442)
 
-[原始博客作者站点](https://gaohaoyang.github.io/)
+[Future和FutureTask的区别](https://blog.csdn.net/qq_36898043/article/details/79732643)
 
 
 
