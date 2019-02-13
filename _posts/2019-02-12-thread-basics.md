@@ -32,6 +32,8 @@ author: 刚子
 
 ### 1. 通过实现 `Runnable` 接口
 
+> 推荐这种方式
+
 ```java
 class RunnableDemo implements Runnable {
    private Thread t;
@@ -78,6 +80,8 @@ public class TestThread {
 ```
 
 ### 2. 通过继承 `Thread` 类本身
+
+> 不推荐这种方式，原因是继承Thread类就无法继承其它类，而实现Runnable接口之后，还可以继承其它类
 
 ```java
 class ThreadDemo extends Thread {
@@ -255,6 +259,8 @@ class Task implements Callable<Integer>{
 ### 1. join()
 
 > 作用: 让父线程等待执行该方法的线程结束之后才能继续运行
+> 
+> 底层调用的是wait方法
 
 ```java
 // 父线程
