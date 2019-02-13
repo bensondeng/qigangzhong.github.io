@@ -133,6 +133,7 @@ notify唤醒一个等待的线程；notifyAll唤醒所有等待的线程。
 > 1、生产者产生资源往池子里添加，前提是池子没有满，如果池子满了，则生产者暂停生产，直到自己的生成能放下池子。  
 > 2、消费者消耗池子里的资源，前提是池子的资源不为空，否则消费者暂停消耗，进入等待直到池子里有资源数满足自己的需求。
 
+
 ```java
 public interface AbstractStorage {
     void consume(int num);
@@ -335,88 +336,92 @@ import java.util.Random;
 * @author Javin Paul
 */
 public class ProducerConsumerInJava {
-    public static void main(String args[]) {
-        System.out.println("How to use wait and notify method in Java");
-        System.out.println("Solving Producer Consumper Problem");
-        Queue<Integer> buffer = new LinkedList<>();
-        int maxSize = 10;
-        Thread producer = new Producer(buffer, maxSize, "PRODUCER");
-        Thread consumer = new Consumer(buffer, maxSize, "CONSUMER");
-        producer.start(); consumer.start(); }
-    }
-    /**
-    * Producer Thread will keep producing values for Consumer
-    * to consumer. It will use wait() method when Queue is full
-    * and use notify() method to send notification to Consumer
-    * Thread.
-    *
-    * @author WINDOWS 8
-    *
-    */
-    class Producer extends Thread
-    { private Queue<Integer> queue;
-        private int maxSize;
-        public Producer(Queue<Integer> queue, int maxSize, String name){
-            super(name); this.queue = queue; this.maxSize = maxSize;
-        }
-        @Override public void run()
-        {
-            while (true)
-                {
-                    synchronized (queue) {
-                        while (queue.size() == maxSize) {
-                            try {
-                                System.out .println("Queue is full, " + "Producer thread waiting for " + "consumer to take something from queue");
-                                queue.wait();
-                            } catch (Exception ex) {
-                                ex.printStackTrace(); }
-                            }
-                            Random random = new Random();
-                            int i = random.nextInt();
-                            System.out.println("Producing value : " + i); queue.add(i); queue.notifyAll();
-                        }
-                    }
-                }
-            }
-    /**
-    * Consumer Thread will consumer values form shared queue.
-    * It will also use wait() method to wait if queue is
-    * empty. It will also use notify method to send
-    * notification to producer thread after consuming values
-    * from queue.
-    *
-    * @author WINDOWS 8
-    *
-    */
-    class Consumer extends Thread {
-        private Queue<Integer> queue;
-        private int maxSize;
-        public Consumer(Queue<Integer> queue, int maxSize, String name){
-            super(name);
-            this.queue = queue;
-            this.maxSize = maxSize;
-        }
-        @Override public void run() {
-            while (true) {
-                synchronized (queue) {
-                    while (queue.isEmpty()) {
-                        System.out.println("Queue is empty," + "Consumer thread is waiting" + " for producer thread to put something in queue");
-                        try {
-                            queue.wait();
-                        } catch (Exception ex) {
-                            ex.printStackTrace();
-                        }
-                    }
-                    System.out.println("Consuming value : " + queue.remove()); queue.notifyAll();
-                }
-            }
-        }
-    }
+    public static void main(String args[]) {
+        System.out.println("How to use wait and notify method in Java");
+        System.out.println("Solving Producer Consumper Problem");
+        Queue<Integer> buffer = new LinkedList<>();
+        int maxSize = 10;
+        Thread producer = new Producer(buffer, maxSize, "PRODUCER");
+        Thread consumer = new Consumer(buffer, maxSize, "CONSUMER");
+        producer.start(); consumer.start(); }
+    }
+    /**
+    * Producer Thread will keep producing values for Consumer
+    * to consumer. It will use wait() method when Queue is full
+    * and use notify() method to send notification to Consumer
+    * Thread.
+    *
+    * @author WINDOWS 8
+    *
+    */
+    class Producer extends Thread
+    { private Queue<Integer> queue;
+        private int maxSize;
+        public Producer(Queue<Integer> queue, int maxSize, String name){
+            super(name); this.queue = queue; this.maxSize = maxSize;
+        }
+        @Override public void run()
+        {
+            while (true)
+                {
+                    synchronized (queue) {
+                        while (queue.size() == maxSize) {
+                            try {
+                                System.out .println("Queue is full, " + "Producer thread waiting for " + "consumer to take something from queue");
+                                queue.wait();
+                            } catch (Exception ex) {
+                                ex.printStackTrace(); }
+                            }
+                            Random random = new Random();
+                            int i = random.nextInt();
+                            System.out.println("Producing value : " + i); queue.add(i); queue.notifyAll();
+                        }
+                    }
+                }
+            }
+    /**
+    * Consumer Thread will consumer values form shared queue.
+    * It will also use wait() method to wait if queue is
+    * empty. It will also use notify method to send
+    * notification to producer thread after consuming values
+    * from queue.
+    *
+    * @author WINDOWS 8
+    *
+    */
+    class Consumer extends Thread {
+        private Queue<Integer> queue;
+        private int maxSize;
+        public Consumer(Queue<Integer> queue, int maxSize, String name){
+            super(name);
+            this.queue = queue;
+            this.maxSize = maxSize;
+        }
+        @Override public void run() {
+            while (true) {
+                synchronized (queue) {
+                    while (queue.isEmpty()) {
+                        System.out.println("Queue is empty," + "Consumer thread is waiting" + " for producer thread to put something in queue");
+                        try {
+                            queue.wait();
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                        }
+                    }
+                    System.out.println("Consuming value : " + queue.remove()); queue.notifyAll();
+                }
+            }
+        }
+    }
 ```
 
 ## 参考
 [wait和notify的理解与使用](https://blog.csdn.net/jianiuqi/article/details/53448849)
+
 [java中的notify和notifyAll有什么区别？](https://www.zhihu.com/question/37601861/answer/94679949)
+
 [Java多线程学习之wait、notify/notifyAll 详解](http://www.cnblogs.com/moongeek/p/7631447.html)
+
 [java中的notify和notifyAll有什么区别？](https://blog.csdn.net/djzhao/article/details/79410229)
+
 [为什么wait,notify和notifyAll要与synchronized一起使用？](https://blog.csdn.net/qq_39907763/article/details/79301813)
