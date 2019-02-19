@@ -3,7 +3,7 @@ layout: post
 title:  "线程基础知识总结"
 categories: thread
 tags:  thread
-author: 刚子
+author: 网络
 ---
 
 * content

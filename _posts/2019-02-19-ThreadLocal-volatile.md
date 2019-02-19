@@ -1,9 +1,9 @@
 ---
 layout: post
-title:  "wait、notify、notifyAll"
+title:  "ThreadLocal、volatile"
 categories: thread
 tags:  thread
-author: 刚子
+author: 网络
 ---
 
 * content
@@ -75,10 +75,62 @@ private static ThreadLocal<String> tls = ThreadLocal.withInitial(() -> "hello");
 
 ### 1. 介绍
 
+> 并发编程的三个概念:  
+> **原子性**  volatile不能保证原子性  
+> **可见性**  volatile保证不同线程的可见性  
+> **有序性**  volatile可以一定程度保证有序性，可以防止指令重排序
+>
+> 下面这段话摘自《深入理解Java虚拟机》：
+>
+>　　“观察加入volatile关键字和没有加入volatile关键字时所生成的汇编代码发现，加入volatile关键字时，会多出一个lock前缀指令”
+>
+>　　lock前缀指令实际上相当于一个内存屏障（也成内存栅栏），内存屏障会提供3个功能：
+>
+>　　1）它确保指令重排序时不会把其后面的指令排到内存屏障之前的位置，也不会把前面的指令排到内存屏障的后面；即在执行到内存屏障这句指令时，在它前面的操作已经全部完成；
+>
+>　　2）它会强制将对缓存的修改操作立即写入主存；
+>
+>　　3）如果是写操作，它会导致其他CPU中对应的缓存行无效。
 
+### 2. 应用场景
 
+* 状态标记
+
+```java
+volatile boolean flag = false;
+ 
+while(!flag){
+    doSomething();
+}
+ 
+public void setFlag() {
+    flag = true;
+}
+```
+
+* double check
+
+```java
+class Singleton{
+    private volatile static Singleton instance = null;
+     
+    private Singleton() {}
+     
+    public static Singleton getInstance() {
+        if(instance==null) {
+            synchronized (Singleton.class) {
+                if(instance==null)
+                    instance = new Singleton();
+            }
+        }
+        return instance;
+    }
+}
+```
 
 ## 参考
 [ThreadLocal用法详解和原理](https://www.cnblogs.com/coshaho/p/5127135.html)
 
 [Java并发编程：深入剖析ThreadLocal](https://www.cnblogs.com/dolphin0520/p/3920407.html)
+
+[Java并发编程：volatile关键字解析](https://www.cnblogs.com/dolphin0520/p/3920373.html)
