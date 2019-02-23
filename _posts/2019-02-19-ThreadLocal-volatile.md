@@ -136,3 +136,5 @@ class Singleton{
 [Java并发编程：volatile关键字解析](https://www.cnblogs.com/dolphin0520/p/3920373.html)
 
 [让你彻底理解volatile](https://www.jianshu.com/p/157279e6efdb)
+
+[*****正确使用 Volatile 变量](https://www.ibm.com/developerworks/cn/java/j-jtp06197.html)
