@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "atomic"
+title:  "atomic、unsafe"
 categories: thread
 tags:  thread
 author: 网络
@@ -15,7 +15,7 @@ author: 网络
 总结java线程基础知识
 
 ##  课程目录
-* atomic
+* atomic、unsafe
 
 
 
