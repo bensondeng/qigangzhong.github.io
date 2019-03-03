@@ -24,7 +24,7 @@ author: 网络
 
 
 
-### ThreadPoolExecutor
+### `ThreadPoolExecutor`
 
 #### 构造函数
 ```java
@@ -67,13 +67,12 @@ public ThreadPoolExecutor(int corePoolSize,int maximumPoolSize,long keepAliveTim
 > * 在大多数情况下，核心和最大池大小仅基于构造函数来设置，不过也可以使用 setCorePoolSize(int) 和 setMaximumPoolSize(int) 进行动态更改。
 
 
-> 并不是先加入任务就一定会先执行，假设队列大小为 4，corePoolSize为2，maximumPoolSize为6，那么当加入15个任务时，
+> * 并不是先加入任务就一定会先执行，假设队列大小为 4，corePoolSize为2，maximumPoolSize为6，那么当加入15个任务时，
 执行的顺序类似这样：首先执行任务 1、2，然后任务3~6被放入队列。这时候队列满了，任务7、8、9、10 会被马上执行，而任务 11~15 则会抛出异常。最终顺序是：1、2、7、8、9、10、3、4、5、6。  
 > 当然这个过程是针对指定大小的ArrayBlockingQueue<Runnable>来说，如果是默认的LinkedBlockingQueue<Runnable>，因为该队列无大小限制，maximumPoolSize会无效，队列大小不受控制，会有资源耗尽的风险。
 
-> 最多能执行多少个任务？？？ maximumPoolSize+队列长度
+> * 最多能执行多少个任务？？？ maximumPoolSize+队列长度，超过这个数字之后就拒绝接受任务
 
-简单验证
 ```java
 //简单示例
 public static void main(String[] args) {
@@ -127,7 +126,7 @@ private static final int TIDYING    =  2 << COUNT_BITS;
 private static final int TERMINATED =  3 << COUNT_BITS;
 ```
 
-### Executors
+### `Executors`
 
 在java doc中，并不提倡我们直接使用ThreadPoolExecutor来创建线程池，而是使用Executors类中提供的几个静态方法来创建线程池(底层其实还是调用ThreadPoolExecutor来创建线程池)
 ```java
