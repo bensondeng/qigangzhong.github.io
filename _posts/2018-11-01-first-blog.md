@@ -109,7 +109,7 @@ inherit    |规定应该从父元素继承 text-indent 属性的值。
 <a><img src="{{site.url}}/images/test.jpg"></a>
 </figure>
 
-### 13. 
+### 13. *斜体示例*
 
 
 ## 参考
