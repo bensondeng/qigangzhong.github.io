@@ -1,26 +1,71 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 
-  {% include head.html %}
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  {% if site.bing_meta %} <meta name="msvalidate.01" content="{{site.bing_meta}}" /> {% endif %}
+  {% seo %}
+  <link href="/css/bootstrap.min.css" rel="stylesheet">
+  <link href="/css/font-awesome.min.css" rel="stylesheet">
+  <link href="{{ '/css/main.css' | prepend: site.baseurl }}" rel="stylesheet">
+  <script src="/js/jquery.min.js"></script>
+  <script src="/js/bootstrap.min.js"></script>
+  <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  <script src="/js/main.js"></script>
 
-  <body>
+  {% if site.baidu_tongji_id %}
+  <script>
+    // 百度统计代码
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?{{site.baidu_tongji_id}}";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+  {% endif %}
+  {% if site.google_analytics_id %}
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id={{site.google_analytics_id}}"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
 
-    {% include header.html %}
+    gtag('config', '{{site.google_analytics_id}}');
+  </script>
+  {% endif %}
 
-        {{ content }}
+  <!-- google adsense -->
+  <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+  <script>
+    (adsbygoogle = window.adsbygoogle || []).push({
+      google_ad_client: "ca-pub-2721745535033061",
+      enable_page_level_ads: true
+    });
+  </script>
+</head>
 
-    {% include footer.html %}
-    {% include backToTop.html %}
-    <script src="{{ " /js/main.js " | prepend: site.baseurl }}" charset="utf-8"></script>
-    <script src="{{ " /js/smooth-scroll.min.js " | prepend: site.baseurl }}" charset="utf-8"></script>
-    <script type="text/javascript">
-      smoothScroll.init({
-        speed: 500, // Integer. How fast to complete the scroll in milliseconds
-        easing: 'easeInOutCubic', // Easing pattern to use
-        offset: 20, // Integer. How far to offset the scrolling anchor location in pixels
-      });
-    </script>
-    <!-- <script src="{{ " /js/scroll.min.js " | prepend: site.baseurl }}" charset="utf-8"></script> -->
-  </body>
+<body>
+  <div class="wrapper">
+    <header>
+      {% include header.html %}
+    </header>
+    <section class="container">
+      {{ content }}
+    </section>
+    <footer>
+      {% include footer.html %}
+    </footer>
+  </div>
+  <div class="back-to-top">
+    <a href="javascript:;">
+      <i class="fa fa-arrow-up" aria-hidden="true"></i>
+    </a>
+  </div>
+</body>
 
 </html>

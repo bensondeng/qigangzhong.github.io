@@ -1,61 +1,77 @@
 # Welcome to Jekyll!
 #
-# This config file is meant for settings that affect your whole blog, values
-# which you are expected to set up once and rarely need to edit after that.
-# For technical reasons, this file is *NOT* reloaded automatically when you use
-# 'jekyll serve'. If you change this file, please restart the server process.
-
-# Site settings
-title: 刚子的博客
-brief-intro: Java/.Net Coder
+# 基本信息
+title: 朋也的博客
+email: py2qiuse@gmail.com
+description: 喜欢编码，酷爱动漫
 baseurl: "" # the subpath of your site, e.g. /blog
-url: "https://qigangzhong.github.io" # the base hostname & protocol for your site
+url: "https://tomoya92.github.io" # the base hostname & protocol for your site, e.g. http://example.com
+weibo_username: liygheart
+github_username:  tomoya92
 
+# 文章目录格式化
 permalink: /:year/:month/:day/:title/
+# 文章摘要分隔符
+excerpt_separator: "\n\n\n\n"
 
-# other links
-twitter_username: #gaohaoyang126
-facebook_username: #gaohaoyang.water
-github_username:  qigangzhong
-email: qigangzhong@hotmail.com
-weibo_username: 
-zhihu_username: 
-linkedIn_username: 
-dribbble_username:
-
-description_footer: 来自刚子的个人专栏！
-
-# comments
-# two ways to comment, only choose one, and use your own short name
-# 两种评论插件，选一个就好了，使用自己的 short_name
-duoshuo_shortname: #qigangzhong
-disqus_shortname: #qigangzhong
+# 评论组件
+disqus_shortname: tomoya
 
 # statistic analysis 统计代码
-# 百度统计 id，将统计代码替换为自己的百度统计id，即
-# hm.src = "//hm.baidu.com/hm.js?xxxxxxxxxxxx";
-# xxxxx字符串
-#baidu_tongji_id: 552aa8d99c04e57a157ba015b317ce20
-#google_analytics_id: UA-72449510-4 # google 分析追踪id
+baidu_tongji_id: ebcdac2d132aa663e3ee4c53656bad25
+google_analytics_id: UA-98133026-1
 
-# Build settings
+# webmaster meta
+bing_meta: 8D00F36D8929A335207FBCE7F13C50B3
+
+# 格式化文档
 markdown: kramdown
-
 kramdown:
   input: GFM
   syntax_highlighter: rouge
 
-# port
-# port: 1234
+# 开启相关文章功能，可惜github pages不支持
+# lsi: true
 
-# url
-category_dir: category/
-tag_dir: tag/
+# 插件
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+  - jekyll-seo-tag
+  - jekyll-paginate
 
-# excerpt
-excerpt_separator: "\n\n\n\n"
+# 分页
+paginate: 10
 
-# paginate
-plugins: [jekyll-paginate]
-paginate: 6
-port: 4001
+# 搜索服务
+algolia:
+  application_id: '36883FPR2D'
+  index_name:     '36883FPR2D'
+  search_only_api_key: '2d40767987f704b3b04b9efce7ff49c8'
+
+# 友情链接
+links:
+  -
+    name: 朋也
+    url: https://yiiu.co/
+  -
+    name: 朋也社区
+    url: https://dev.yiiu.co/
+  -
+    name: 开发俱乐部
+    url: https://17dev.club/
+  -
+    name: Beldon
+    url: http://blog.beldon.me/
+
+# Exclude from processing.
+# The following items will not be processed, by default. Create a custom list
+# to override the default setting.
+# exclude:
+#   - Gemfile
+#   - Gemfile.lock
+#   - node_modules
+#   - vendor/bundle/
+#   - vendor/cache/
+#   - vendor/gems/
+#   - vendor/ruby/

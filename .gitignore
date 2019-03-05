@@ -1,6 +1,8 @@
+# Created by .ignore support plugin (hsz.mobi)
+.idea
+*.iml
+.DS_Store
 _site
 .sass-cache
-.jekyll-metadata
+Gemfile.lock
 .vscode
-.idea
-.DS_Store

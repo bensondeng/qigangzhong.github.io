@@ -1,57 +1,63 @@
-/**
- * some JavaScript code for this blog theme
- */
-/* jshint asi:true */
-
-/////////////////////////header////////////////////////////
-/**
- * clickMenu
- */
-(function() {
-  if (window.innerWidth <= 770) {
-    var menuBtn = document.querySelector('#headerMenu')
-    var nav = document.querySelector('#headerNav')
-    menuBtn.onclick = function(e) {
-      e.stopPropagation()
-      if (menuBtn.classList.contains('active')) {
-        menuBtn.classList.remove('active')
-        nav.classList.remove('nav-show')
-      } else {
-        nav.classList.add('nav-show')
-        menuBtn.classList.add('active')
-      }
-    }
-    document.querySelector('body').addEventListener('click', function() {
-      nav.classList.remove('nav-show')
-      menuBtn.classList.remove('active')
-    })
+$(function () {
+  var markdownToc = $("#markdown-toc");
+  var markdownTocHtml = '';
+  if(markdownToc.text().length > 0) {
+    markdownToc.hide();
+    markdownTocHtml = markdownToc.html();
   }
-}());
+  $(".toc").html('<ul class="table-of-content">' +
+    markdownTocHtml +
+    '<li><a href="#comments">添加评论</a></li>' +
+    '</ul>'
+  );
 
-//////////////////////////back to top////////////////////////////
-(function() {
-  var backToTop = document.querySelector('.back-to-top')
-  var backToTopA = document.querySelector('.back-to-top a')
-  // console.log(backToTop);
-  window.addEventListener('scroll', function() {
-
-    // 页面顶部滚进去的距离
-    var scrollTop = Math.max(document.documentElement.scrollTop, document.body.scrollTop)
-
-    if (scrollTop > 200) {
-      backToTop.classList.add('back-to-top-show')
+  var postRight = $(".post-right");
+  if(postRight.length > 0) {
+    var postRightWidth = postRight.css('width');
+    postRight.css({
+      'position': 'fixed',
+      'width': postRightWidth
+    })
+    var windowHeight = $(window).height();
+    var postRightHeight = postRight.height();
+    var offsetTop = postRight.offset().top;
+    if(postRightHeight + 40 > windowHeight) {
+      postRight.find('.panel-default').css({
+        'height': parseInt(windowHeight - 40) + 'px',
+      });
+      postRight.find('.panel-body').css({
+        'overflow': 'auto',
+        'height': parseInt(windowHeight - 40 - 42) + 'px',
+      })
+    }
+    if (offsetTop > 72) {
+      postRight.css({
+        'top': '20px'
+      })
+    }
+  }
+  // back to top
+  var backToTop = $(".back-to-top");
+  $(window).scroll(function () {
+    var scrollTop = $(this).scrollTop();
+    if (scrollTop >= 50) {
+      postRight.css({
+        'position': 'fixed',
+        'top': '20px'
+      })
     } else {
-      backToTop.classList.remove('back-to-top-show')
+      postRight.css({
+        'position': 'fixed',
+        'top': (70 - scrollTop) + 'px'
+      })
+    }
+    if(scrollTop > 200) {
+      backToTop.addClass("back-to-top-show");
+    } else {
+      backToTop.removeClass("back-to-top-show");
     }
   })
-
-  // backToTopA.addEventListener('click',function (e) {
-  //     e.preventDefault()
-  //     window.scrollTo(0,0)
-  // })
-}());
-
-//////////////////////////hover on demo//////////////////////////////
-(function() {
-  var demoItems = document.querySelectorAll('.grid-item')
-}());
+  backToTop.click(function () {
+    $("html,body").animate({scrollTop: 0}, 500);
+  })
+});
