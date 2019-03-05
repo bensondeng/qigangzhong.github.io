@@ -36,13 +36,13 @@ layout: default
           <div class="paginate" style="display: flex; justify-content: space-between;">
             <div style="flex: 1"  class="text-left">
               {% if paginator.previous_page %}
-                <a href="{{ paginator.previous_page_path }}">较新的博客</a>
+                <a href="{{ paginator.previous_page_path }}">前一页</a>
               {% endif %}
             </div>
             <div style="flex: 1" class="text-center">{{ paginator.page }} / {{ paginator.total_pages }}</div>
             <div style="flex: 1;" class="text-right">
               {% if paginator.next_page %}
-                <a href="{{ paginator.next_page_path }}">较旧的博客</a>
+                <a href="{{ paginator.next_page_path }}">下一页</a>
               {% endif %}
             </div>
             <!-- {% if paginator.previous_page %}
