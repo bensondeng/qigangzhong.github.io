@@ -14,11 +14,11 @@ permalink: /:year/:month/:day/:title/
 excerpt_separator: "\n\n\n\n"
 
 # 评论组件
-disqus_shortname: tomoya
+disqus_shortname: gangzi
 
 # statistic analysis 统计代码
-baidu_tongji_id: ebcdac2d132aa663e3ee4c53656bad25
-google_analytics_id: UA-98133026-1
+baidu_tongji_id: ea5433d31a8e5869587b5cd565f0c23f
+google_analytics_id: UA-135642516-1
 
 # webmaster meta
 bing_meta: 8D00F36D8929A335207FBCE7F13C50B3
