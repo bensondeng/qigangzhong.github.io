@@ -1,13 +1,12 @@
 # Welcome to Jekyll!
 #
 # 基本信息
-title: 朋也的博客
-email: py2qiuse@gmail.com
-description: 喜欢编码，酷爱动漫
+title: 刚子的博客
+email: qigangzhong@hotmail.com
+description: .Net/Java Coder
 baseurl: "" # the subpath of your site, e.g. /blog
-url: "https://tomoya92.github.io" # the base hostname & protocol for your site, e.g. http://example.com
-weibo_username: liygheart
-github_username:  tomoya92
+url: "https://qigangzhong.github.io" # the base hostname & protocol for your site, e.g. http://example.com
+github_username:  qigangzhong
 
 # 文章目录格式化
 permalink: /:year/:month/:day/:title/
@@ -50,19 +49,19 @@ algolia:
   search_only_api_key: '2d40767987f704b3b04b9efce7ff49c8'
 
 # 友情链接
-links:
-  -
-    name: 朋也
-    url: https://yiiu.co/
-  -
-    name: 朋也社区
-    url: https://dev.yiiu.co/
-  -
-    name: 开发俱乐部
-    url: https://17dev.club/
-  -
-    name: Beldon
-    url: http://blog.beldon.me/
+# links:
+#   -
+#     name: 朋也
+#     url: https://yiiu.co/
+#   -
+#     name: 朋也社区
+#     url: https://dev.yiiu.co/
+#   -
+#     name: 开发俱乐部
+#     url: https://17dev.club/
+#   -
+#     name: Beldon
+#     url: http://blog.beldon.me/
 
 # Exclude from processing.
 # The following items will not be processed, by default. Create a custom list
