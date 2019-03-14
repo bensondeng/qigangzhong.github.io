@@ -29,9 +29,9 @@ author: 刚子
 
 ## SPI是什么
 
-SPI(Service Provider Interface)是JDK内置的一种服务提供发现机制。一个服务(Service)通常指的是已知的接口或者抽象类，服务提供方(Service Provider)就是对这个接口或者抽象类的实现，按照SPI标准在资源路径META-INF/services目录下创建一个以服务的全名称命名的文件，文件中配置服务提供方，类加载器就可以动态地加载服务提供方。通过这个配置文件来实现服务、服务提供方的解耦，生产服务的一方即为制定服务标准的一方，而服务提供方可以认为是实现标准的一方。
+SPI(Service Provider Interface)是JDK内置的一种服务提供发现机制。一个服务(Service)通常指的是已知的接口或者抽象类，服务提供者(Service Provider)就是对这个接口或者抽象类的实现，按照SPI标准在资源路径META-INF/services目录下创建一个以服务的全名称命名的文件，文件中配置服务提供者全名称，类加载器就可以动态地加载服务提供者，通过这个配置文件实现了服务、服务提供者的解耦，生产服务的一方即为制定服务标准的一方，而服务提供者是实现服务标准的一方。
 
-在JDK中可以通过java.util.ServiceLoader类来实现SPI机制。
+在JDK中通过java.util.ServiceLoader类来实现SPI机制。
 
 ## ServiceLoader
 
@@ -208,3 +208,5 @@ public class Jack implements HelloService {
 ## 参考
 
 [AutoService](https://github.com/google/auto/tree/master/service)
+
+[ServiceLoader跟DriverManager使用总结](http://www.myexception.cn/program/1355384.html)
