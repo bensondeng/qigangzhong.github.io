@@ -184,7 +184,7 @@ ServiceLoader<HelloService> services = ServiceLoader.load(HelloService.class, cl
 
 ## google AutoService
 
-每次新增加一个服务提供方就必须在/META-INF/services的服务配置文件中添加一条服务提供方的全名称，这样做很麻烦且容易遗忘，通过google AutoService可以利用java中的annotation来编译期间自动生成这个配置文件。
+对于一个服务提供方来讲，每次新增加一个服务提供者就必须在/META-INF/services的服务配置文件中添加一条服务提供者的全名称，这样做很麻烦且容易遗忘，通过google AutoService可以利用java中的annotation来编译期间自动生成这个配置文件。
 
 ```xml
 <dependency>
