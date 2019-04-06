@@ -27,7 +27,7 @@ author: 刚子
 
 
 
-## 简易教程
+## 一、简易教程
 
 ### 1. 下载安装
 
@@ -157,7 +157,18 @@ curl 'http://localhost:9200/accounts/person/_search'  -d '
 # size表示每页几条数据
 ```
 
-## 查询DSL
+### 9. 配置文件
+
+```
+>vim config/elasticsearch.yml
+cluster.name=myesclustername
+
+node.name=node_001
+```
+
+[重要配置的修改](https://www.elastic.co/guide/cn/elasticsearch/guide/current/important-configuration-changes.html#_%E6%8C%87%E5%AE%9A%E5%90%8D%E5%AD%97)
+
+## 二、查询DSL
 
 * 添加雇员索引文档
 
@@ -307,7 +318,7 @@ GET _cat/count/freshsharepro?v
 GET freshsharepro/commodity/_mapping
 ```
 
-## Kibana
+## 三、Kibana
 
 ### 下载安装
 
@@ -331,28 +342,9 @@ server.host: "0.0.0.0"
 
 [query string syntax](https://www.elastic.co/guide/en/elasticsearch/reference/5.5/query-dsl-query-string-query.html#query-string-syntax)
 
-## 集群配置
+## 四、中文分词
 
-```
->vim config/elasticsearch.yml
-cluster.name=myesclustername
-```
-
-```
-# 配置主分片和副本分片数量
-curl -X PUT "localhost:9200/blogs" -H 'Content-Type: application/json' -d'
-{
-   "settings" : {
-      "number_of_shards" : 3,
-      "number_of_replicas" : 1
-   }
-}
-'
-```
-
-## 中文分词
-
-### 简单示例
+### 英文分词示例
 
 ```
 PUT test/doc/1
@@ -602,7 +594,7 @@ public String getCustomDic(HttpServletRequest request,HttpServletResponse respon
 }
 ```
 
-## 同义词
+## 五、同义词
 
 ### 维护静态同义词词库
 
@@ -868,7 +860,9 @@ POST synonymtest/_analyze
 }
 ```
 
+## 六、Java SDK
 
+[Java API](https://www.elastic.co/guide/en/elasticsearch/client/java-api/current/index.html)
 
 ## 参考
 [ElasticSearch权威指南](https://www.elastic.co/guide/cn/elasticsearch/guide/current/index.html)
