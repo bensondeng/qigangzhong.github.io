@@ -241,6 +241,9 @@ NIO与普通IO的主要区别:
 | 阻塞IO(Blocking IO)   | 非阻塞IO(Non Blocking IO) |
 | (无)                   | 选择器(Selectors)        |
 
+
+NIO的优点：
+
 * 可以实现异步IO
 * 基于Channel和Buffer进行操作，数据从Channel读取到Buffer中，或者从Buffer写入到Channel
 * 引入Selector多路复用技术，单个线程利用Selector可以监听多个通道事件，减小系统开销
@@ -485,7 +488,7 @@ class PipTask implements Runnable {
 }
 ```
 
-## AIO
+## 三、AIO
 
 > NIO 2.0引入了新的异步通道的概念，提供了异步文件通道（AsynchronousFileChannel）和异步套接字通道（AsynchronousServerSocketChannel）的实现。可以通过两种方式来获取异步操作的结果，Future或CompletionHandler。AIO是真正的异步非阻塞IO，不需要Selector来对注册通道进行轮询操作实现读写，简化了NIO编程模型。
 
@@ -925,6 +928,19 @@ public class ReadHandler implements CompletionHandler<Integer, ByteBuffer> {
     }
 }
 ```
+
+## 四、IO模型的对比
+
+|                   | 同步阻塞I/O | 带缓冲区的同步I/O | 非阻塞I/O                  | 异步I/O                          |
+| ----------------- | ----------- | --------------------- | ----------------------------- | ---------------------------------- |
+| 客户端数：I/O线程 | 1:1         | M:N（其中M可以大于N） | M:1（1个I/O线程处理多个连接） | M:0（无需额外的I/O线程，被动回调） |
+| I/O类型（阻塞） | 阻塞      | 阻塞                | 非阻塞                     | 非阻塞                          |
+| I/O类型（同步） | 同步      | 同步                | 同步（I/O多路复用）   | 异步                             |
+| API使用难度   | 简单      | 简单                | 复杂                        | 复杂                             |
+| 调试难度      | 简单      | 简单                | 复杂                        | 复杂                             |
+| 可靠性         | 非常差   | 差                   | 高                           | 高                                |
+| 吞吐量         | 低         | 中                   | 高                           | 高                                |
+
 
 ## 参考
 
