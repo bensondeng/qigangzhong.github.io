@@ -28,10 +28,10 @@ author: 刚子
 
 3. 新建目录, 右键用vscode打开，添加hello.py，内容如下
 
-```python
-msg = "Hello World"
-print(msg)
-```
+	```python
+	msg = "Hello World"
+	print(msg)
+	```
 
 4. 安装python插件
 
@@ -138,7 +138,7 @@ main()
 	"mobileId": "d090d623b5f69ee8dfb3fb2980f2f3ad",
 	"phoneModel": "Apple iPhone 6s Plus",
 	"appVersion": "3.9.2.5",
-	"companyCode": "benlai",
+	"companyCode": "ABC",
 	"resolution": "1242x2208"
 }
 
@@ -147,7 +147,7 @@ main()
 	"Remark": "",
 	"Latitude": "31.193328823666427",
 	"Longitude": "121.4296281200414",
-	"Address": "上海市上海市徐汇区中山西路1515号-8楼",
+	"Address": "上海市上海市徐汇区",
 	"timeStamp": "{{loginTime2}}}}",
 	"SessionId": "{{sessionid}}",
 	"MachineID": "88a92445-54c0-4d4e-92b6-9dad7c0dd3c6",
