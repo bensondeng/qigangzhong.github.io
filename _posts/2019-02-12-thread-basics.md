@@ -9,13 +9,8 @@ author: 网络
 * content
 {:toc}
 
-
-## 前言
-
-
 总结java线程基础知识
 
-##  课程目录
 * 创建线程的三种方式
 * Thread方法介绍
 

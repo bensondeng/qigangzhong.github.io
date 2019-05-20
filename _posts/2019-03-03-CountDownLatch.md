@@ -9,13 +9,7 @@ author: 网络
 * content
 {:toc}
 
-
-## 前言
-
-总结java线程基础知识
-
-##  课程目录
-* CountDownLatch
+总结java线程CountDownLatch基础知识
 
 
 

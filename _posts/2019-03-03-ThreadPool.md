@@ -14,7 +14,7 @@ author: 网络
 
 总结java线程基础知识
 
-##  课程目录
+## 目录
 * ThreadPoolExecutor
 * Executors
 

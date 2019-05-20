@@ -9,13 +9,7 @@ author: 网络
 * content
 {:toc}
 
-
-## 前言
-
-
 总结java基础知识
-
-##  课程目录
 
 * `.class`文件结构
 * 反编译工具

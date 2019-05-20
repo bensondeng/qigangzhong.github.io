@@ -9,13 +9,7 @@ author: 刚子
 * content
 {:toc}
 
-
-## 前言
-
-
 总结通过supervisor管理应用进程的知识点
-
-##  课程目录
 
 
 

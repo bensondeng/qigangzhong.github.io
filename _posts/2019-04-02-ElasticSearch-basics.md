@@ -9,13 +9,7 @@ author: 刚子
 * content
 {:toc}
 
-
-## 前言
-
-
 总结ElasticSearch的基础知识点
-
-##  课程目录
 
 
 

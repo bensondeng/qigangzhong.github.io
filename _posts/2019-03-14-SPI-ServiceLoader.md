@@ -9,12 +9,7 @@ author: 刚子
 * content
 {:toc}
 
-
-## 前言
-
 总结java基础知识
-
-##  课程目录
 
 * SPI
 * ServiceLoader

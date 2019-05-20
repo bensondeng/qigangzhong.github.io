@@ -9,13 +9,7 @@ author: 网络
 * content
 {:toc}
 
-
-## 前言
-
 总结java序列化相关的知识
-
-##  课程目录
-* transient
 
 
 
