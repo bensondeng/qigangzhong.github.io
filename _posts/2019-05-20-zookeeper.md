@@ -9,8 +9,6 @@ author: 刚子
 * content
 {:toc}
 
-## 前言
-
 总结zk知识点
 
 
@@ -56,7 +54,7 @@ export PATH=.:$PATH:$ZOOKEEPER_HOME/bin
 * 配置伪集群环境
 
 ```
-1. 单台机器上创建3个不同的配置文件zoo1.cfg、zoo2.cfg、zoo3.cfg， 配置内容见右方。
+1. 单台机器上创建3个不同的配置文件zoo1.cfg、zoo2.cfg、zoo3.cfg， 配置内容见下方。
 
 2. 在配置文件指定的dataDir目录下面创建myid文件，内容分别为0,1,2，对应配置文件中的server.X
 
