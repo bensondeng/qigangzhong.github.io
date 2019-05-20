@@ -2,7 +2,7 @@
 layout: post
 title:  "zookeeper"
 categories: tools
-tags:  zk,zookeeper,tools
+tags:  zookeeper
 author: 刚子
 ---
 
@@ -208,3 +208,6 @@ delete /zk
 
 ## 参考
 
+[ZooKeeper学习](https://www.cnblogs.com/wuxl360/p/5817471.html)
+
+[基于zookeeper的配置管理中心](https://blog.csdn.net/flykinghg/article/details/52934693)

@@ -2,7 +2,7 @@
 layout: post
 title:  "在vscode中开发调试python"
 categories: tools
-tags:  python,tools
+tags:  python
 author: 刚子
 ---
 
