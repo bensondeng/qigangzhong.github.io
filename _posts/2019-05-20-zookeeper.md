@@ -211,3 +211,5 @@ delete /zk
 [ZooKeeper学习](https://www.cnblogs.com/wuxl360/p/5817471.html)
 
 [基于zookeeper的配置管理中心](https://blog.csdn.net/flykinghg/article/details/52934693)
+
+[zookeeper-step](https://github.com/flykingmz/zookeeper-step)
