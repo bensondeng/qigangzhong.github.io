@@ -206,6 +206,10 @@ set /zk myData1
 delete /zk
 ```
 
+## 二、zookeeper java客户端
+
+[示例代码](https://gitee.com/qigangzhong/toolset/tree/master/archaius-demo)
+
 ## 参考
 
 [ZooKeeper学习](https://www.cnblogs.com/wuxl360/p/5817471.html)
