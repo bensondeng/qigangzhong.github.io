@@ -208,7 +208,7 @@ delete /zk
 
 ## 二、zookeeper java客户端
 
-[示例代码](https://gitee.com/qigangzhong/toolset/tree/master/archaius-demo)
+[示例代码](https://gitee.com/qigangzhong/toolset/tree/master/zk-demo)
 
 ## 参考
 
