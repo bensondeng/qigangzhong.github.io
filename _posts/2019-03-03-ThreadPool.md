@@ -38,11 +38,11 @@ public ThreadPoolExecutor(int corePoolSize,int maximumPoolSize,long keepAliveTim
 1.几个核心参数概念:
 
 * corePoolSize  
-池大小，如果当前线程池中的线程数目小于corePoolSize，则每来一个任务，就会创建一个线程去执行这个任务，当线程池中任务数量到达改值时，新的任务会放到队列中
+池大小，如果当前线程池中的线程数目小于corePoolSize，则每来一个任务，就会创建一个线程去执行这个任务，当线程池中任务数量到达该值时，新的任务会放到队列中
 * maximumPoolSize  
 最大线程数，超过这个数量就拒绝服务
 * keepAliveTime  
-表示线程没有任务执行时最多保持多久时间会终止。默认情况下，只有当线程池中的线程数大于corePoolSize时，keepAliveTime才会起作用，直到线程池中的线程数不大于corePoolSize，即当线程池中的线程数大于corePoolSize时，如果一个线程空闲的时间达到keepAliveTime，则会终止，直到线程池中的线程数不超过corePoolSize。但是如果调用了allowCoreThreadTimeOut(boolean)方法，在线程池中的线程数不大于corePoolSize时，keepAliveTime参数也会起作用，直到线程池中的线程数为0
+表示线程没有任务执行时最多保持多久会终止。默认情况下，只有当线程池中的线程数大于corePoolSize时，keepAliveTime才会起作用，直到线程池中的线程数不大于corePoolSize，即当线程池中的线程数大于corePoolSize时，如果一个线程空闲的时间达到keepAliveTime，则会终止，直到线程池中的线程数不超过corePoolSize。但是如果调用了allowCoreThreadTimeOut(boolean)方法，在线程池中的线程数不大于corePoolSize时，keepAliveTime参数也会起作用，直到线程池中的线程数为0
 * unit  
 参数keepAliveTime的时间单位，有7种取值
 * workQueue  
@@ -51,11 +51,11 @@ public ThreadPoolExecutor(int corePoolSize,int maximumPoolSize,long keepAliveTim
   * LinkedBlockingQueue: 基于链表的先进先出队列，如果创建时没有指定此队列大小，则默认为Integer.MAX_VALUE
   * SynchronousQueue: 这个队列比较特殊，它不会保存提交的任务，而是将直接新建一个线程来执行新来的任务
 * threadFactory  
-线程工厂，主要用来创建线程
+线程工厂，主要用来创建线程，不指定则默认使用DefaultThreadFactory(创建线程规则：非守护线程，Thread.NORM_PRIORITY)
 * handler  
 表示当拒绝处理任务时的策略，有以下四种取值:
-  * ThreadPoolExecutor.AbortPolicy:丢弃任务并抛出RejectedExecutionException异常。 
-  * ThreadPoolExecutor.DiscardPolicy：也是丢弃任务，但是不抛出异常。 
+  * ThreadPoolExecutor.AbortPolicy:丢弃任务并抛出RejectedExecutionException异常
+  * ThreadPoolExecutor.DiscardPolicy：也是丢弃任务，但是不抛出异常
   * ThreadPoolExecutor.DiscardOldestPolicy：丢弃队列最前面的任务，然后重新尝试执行任务（重复此过程）
   * ThreadPoolExecutor.CallerRunsPolicy：由调用线程处理该任务
 
@@ -116,6 +116,76 @@ class MyRunnable implements Runnable {
 }
 ```
 
+以上代码，最大线程数为6，队列长度为4，可执行6+4=10个任务，如果执行15个任务，最后5个会被拒绝
+
+#### ThreadFactory
+
+> 使用ThreadFactory自定义工厂能替代默认的DefaultThreadFactory，DefaultThreadFactory默认创建出来的线程都是用户线程而非守护线程，且线程的优先级都是Thread.NORM_PRIORITY。在自定义工厂里面，我们能创建定制化的Thread，并且计数，或则限制创建Thread的数量，给每个Thread设置对应的好听的名字，或者其他的很多很多事情。
+
+示例：
+
+```java
+import java.util.concurrent.ThreadFactory;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+
+public class MyThreadFactory implements ThreadFactory {
+
+    private int counter;
+    private String name;
+    private List<String> stats;
+
+    public MyThreadFactory(String name) {
+        counter = 0;
+        this.name = name;
+        stats = new ArrayList<>();
+    }
+
+    @Override
+    public Thread newThread(Runnable run) {
+        Thread t = new Thread(run, name + "-Thread-" + counter);
+        counter++;
+        stats.add(String.format("Created thread %d with name %s on%s\n" ,t.getId() ,t.getName() ,new Date()));
+        return t;
+    }
+
+    public String getStas() {
+        StringBuffer buffer = new StringBuffer();
+        Iterator<String> it = stats.iterator();
+        while(it.hasNext()) {
+            buffer.append(it.next());
+            //   buffer.append("\n");
+        }
+        return buffer.toString();
+    }
+
+    public static void main(String[] args) {
+        MyThreadFactory factory = new MyThreadFactory("MyThreadFactory");
+        Task task = new Task();
+        Thread thread = null;
+        for(int i = 0; i < 10; i++) {
+            thread = factory.newThread(task);
+            thread.start();
+        }
+        System.out.printf("Factory stats:\n");
+        System.out.printf("%s\n",factory.getStas());
+    }
+}
+
+class Task implements Runnable{
+    @Override
+    public void run() {
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+}
+```
+
 #### 线程状态定义
 
 ```java
@@ -129,9 +199,15 @@ private static final int TIDYING    =  2 << COUNT_BITS;
 private static final int TERMINATED =  3 << COUNT_BITS;
 ```
 
-### `Executors`
+### `Executors`创建4种线程池
 
-在java doc中，并不提倡我们直接使用ThreadPoolExecutor来创建线程池，而是使用Executors类中提供的几个静态方法来创建线程池(底层其实还是调用ThreadPoolExecutor来创建线程池)
+在java doc中，并不提倡我们直接使用ThreadPoolExecutor来创建线程池，而是使用Executors类中提供的几个静态方法来创建线程池(底层其实还是调用ThreadPoolExecutor来创建线程池)，实际项目中手动创建ThreadPoolExecutor，指定参数会更好，理由是写代码的人可以更清楚线程池的运行规则，避免资源耗尽的风险
+
+> Executors各个方法的弊端：
+>
+> 1) `newFixedThreadPool`和`newSingleThreadExecutor`主要的问题是队列长度不受控制，可能会有OOM风险
+>
+> 2) `newCachedThreadPool`和`newScheduledThreadPool`主要问题是maximumPoolSize=Integer.MAX_VALUE，可能会有OOM风险
 
 ```java
 //1. 创建一个可缓存线程池，应用中存在的线程数可以无限大
@@ -244,7 +320,7 @@ private static <T> Map<String,Callable<T>> createTasks() {
     taskMap.put("task2",new MyCallable(2));
     return taskMap;
 }
-//第三部, 提供使用完成之后停止线程池的方法
+//第三步, 提供使用完成之后停止线程池的方法
 public static void shutdown() {
     if (serviceRef.get() != null) {
         synchronized(ThreadPoolExecutorDemo.class) {
@@ -262,3 +338,5 @@ public static void shutdown() {
 [Java并发编程：线程池的使用](https://www.cnblogs.com/dolphin0520/p/3932921.html)
 
 [四种Java线程池用法解析](https://www.cnblogs.com/ruiati/p/6134131.html)
+
+[Java并发编程-ThreadFactory接口](https://blog.csdn.net/chenchaofuck1/article/details/51589774)
