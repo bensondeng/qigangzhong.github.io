@@ -9,12 +9,12 @@ author: 网络
 * content
 {:toc}
 
-
 ## 前言
 
 总结java线程基础知识
 
 ## 目录
+
 * ThreadPoolExecutor
 * Executors
 
@@ -27,13 +27,16 @@ author: 网络
 ### `ThreadPoolExecutor`
 
 #### 构造函数
+
 ```java
 public ThreadPoolExecutor(int corePoolSize,int maximumPoolSize,long keepAliveTime,TimeUnit unit,BlockingQueue<Runnable> workQueue);
 public ThreadPoolExecutor(int corePoolSize,int maximumPoolSize,long keepAliveTime,TimeUnit unit,BlockingQueue<Runnable> workQueue,ThreadFactory threadFactory);
 public ThreadPoolExecutor(int corePoolSize,int maximumPoolSize,long keepAliveTime,TimeUnit unit,BlockingQueue<Runnable> workQueue,RejectedExecutionHandler handler);
 public ThreadPoolExecutor(int corePoolSize,int maximumPoolSize,long keepAliveTime,TimeUnit unit,BlockingQueue<Runnable> workQueue,ThreadFactory threadFactory,RejectedExecutionHandler handler);
 ```
-1. 几个核心参数概念:
+
+1.几个核心参数概念:
+
 * corePoolSize  
 池大小，如果当前线程池中的线程数目小于corePoolSize，则每来一个任务，就会创建一个线程去执行这个任务，当线程池中任务数量到达改值时，新的任务会放到队列中
 * maximumPoolSize  
@@ -56,7 +59,7 @@ public ThreadPoolExecutor(int corePoolSize,int maximumPoolSize,long keepAliveTim
   * ThreadPoolExecutor.DiscardOldestPolicy：丢弃队列最前面的任务，然后重新尝试执行任务（重复此过程）
   * ThreadPoolExecutor.CallerRunsPolicy：由调用线程处理该任务
 
-2. 注意事项
+2.注意事项
 
 > * ThreadPoolExecutor将根据 corePoolSize和 maximumPoolSize设置的边界自动调整池大小
 当新任务在方法 execute(java.lang.Runnable) 中提交时，如果运行的线程少于 corePoolSize，则创建新线程来处理请求，即使其他辅助线程是空闲的。
@@ -65,12 +68,11 @@ public ThreadPoolExecutor(int corePoolSize,int maximumPoolSize,long keepAliveTim
 > * 如果设置的 corePoolSize 和 maximumPoolSize 相同，则创建了固定大小的线程池。
 > * 如果将 maximumPoolSize 设置为基本的无界值（如 Integer.MAX_VALUE），则允许池适应任意数量的并发任务。
 > * 在大多数情况下，核心和最大池大小仅基于构造函数来设置，不过也可以使用 setCorePoolSize(int) 和 setMaximumPoolSize(int) 进行动态更改。
-
-
+>
 > * 并不是先加入任务就一定会先执行，假设队列大小为 4，corePoolSize为2，maximumPoolSize为6，那么当加入15个任务时，
 执行的顺序类似这样：首先执行任务 1、2，然后任务3~6被放入队列。这时候队列满了，任务7、8、9、10 会被马上执行，而任务 11~15 则会抛出异常。最终顺序是：1、2、7、8、9、10、3、4、5、6。  
-> 当然这个过程是针对指定大小的ArrayBlockingQueue<Runnable>来说，如果是默认的LinkedBlockingQueue<Runnable>，因为该队列无大小限制，maximumPoolSize会无效，队列大小不受控制，会有资源耗尽的风险。
-
+> 当然这个过程是针对指定大小的`ArrayBlockingQueue<Runnable>`来说，如果是默认的LinkedBlockingQueue<Runnable>，因为该队列无大小限制，maximumPoolSize会无效，队列大小不受控制，会有资源耗尽的风险。
+>
 > * 最多能执行多少个任务？？？ maximumPoolSize+队列长度，超过这个数字之后就拒绝接受任务
 
 ```java
@@ -115,6 +117,7 @@ class MyRunnable implements Runnable {
 ```
 
 #### 线程状态定义
+
 ```java
 private static final int RUNNING    = -1 << COUNT_BITS;
 //如果调用了shutdown()方法，则线程池处于SHUTDOWN状态，此时线程池不能够接受新的任务，它会等待所有任务执行完毕
@@ -129,6 +132,7 @@ private static final int TERMINATED =  3 << COUNT_BITS;
 ### `Executors`
 
 在java doc中，并不提倡我们直接使用ThreadPoolExecutor来创建线程池，而是使用Executors类中提供的几个静态方法来创建线程池(底层其实还是调用ThreadPoolExecutor来创建线程池)
+
 ```java
 //1. 创建一个可缓存线程池，应用中存在的线程数可以无限大
 ExecutorService newCachedThreadPool = Executors.newCachedThreadPool();
@@ -252,7 +256,6 @@ public static void shutdown() {
     }
 }
 ```
-
 
 ## 参考
 
