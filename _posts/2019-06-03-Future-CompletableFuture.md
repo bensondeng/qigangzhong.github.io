@@ -231,6 +231,8 @@ public class CompletionServiceDemo{
 
 ## 二、CompletableFuture
 
+> CompletableFuture类实现了CompletionStage接口，以及Future接口
+
 ### 2.1 
 
 ## 三、Future|FutureTask|CompletionService|CompletableFuture对比
@@ -246,3 +248,7 @@ public class CompletionServiceDemo{
 ## 参考
 
 [*****多线程并发执行任务，取结果归集。终极总结：Future、FutureTask、CompletionService、CompletableFuture](https://www.cnblogs.com/dennyzhangdd/p/7010972.html)
+
+[20 个使用 Java CompletableFuture的例子](http://www.importnew.com/28319.html)
+
+[completablefuture-examples](https://github.com/manouti/completablefuture-examples)
