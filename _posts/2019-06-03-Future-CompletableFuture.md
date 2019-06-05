@@ -233,7 +233,263 @@ public class CompletionServiceDemo{
 
 > CompletableFuture类实现了CompletionStage接口，以及Future接口
 
-### 2.1 
+### 2.1 获取任务执行结果的方式
+
+获取任务执行结果的方式有以下几种：
+
+```java
+//阻塞直到获取到结果或者抛出异常，会向外部抛出ExecutionException
+public T get();
+//阻塞直到获取到结果或者抛出异常或超时，会向外部抛出ExecutionException、TimeoutException
+public T get(long timeout, TimeUnit unit);
+//如果计算完成没有问题返回计算后的值
+//如果任务执行异常则获取到默认的值，该方法不会再向外抛出异常
+public T getNow(T valueIfAbsent);
+//阻塞直到获取到结果或者抛出异常，会向外抛出CompletionException
+public T join();
+```
+
+### 2.2 示例
+
+```java
+import java.util.concurrent.*;
+public class CompletableFutureDemo {
+    public static void main(String[] args) throws InterruptedException, ExecutionException, TimeoutException {
+        //completedFutureExample();
+        //runAsyncExample();
+        //thenApplyExample();
+        //thenApplyWithExecutorExample();
+        //thenAcceptExample();
+        //completeExceptionallyExample();
+        //cancelExample();
+        //thenComposeExample();
+        //doSthWhenTasksCompleted();
+    }
+
+    //region 1、 创建一个完成的CompletableFuture
+    private static void completedFutureExample() {
+        //其实就是使用常量组装一个CompletableFuture而已
+        CompletableFuture<String> cf = CompletableFuture.completedFuture("message");
+        Object result = cf.getNow(null);
+        System.out.println(result);
+    }
+    //endregion
+
+    //region 2、运行一个简单的异步阶段
+    private static void runAsyncExample() throws InterruptedException {
+        CompletableFuture<Void> cf = CompletableFuture.runAsync(()->{
+            System.out.println("一步线程是否是daemon线程:"+Thread.currentThread().isDaemon());
+            try {
+                TimeUnit.SECONDS.sleep(2);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            System.out.println("done...");
+        });
+
+        System.out.println("结束了吗？"+cf.isDone());
+
+        TimeUnit.SECONDS.sleep(3);
+
+        System.out.println("结束了吗？"+cf.isDone());
+    }
+    //endregion
+
+    //region 3、在前一个阶段上应用函数
+    private static void thenApplyExample() {
+        /*CompletableFuture cf = CompletableFuture.completedFuture("message").thenApply(v-> {
+            return v.toUpperCase();
+        });*/
+        //CompletableFuture cf = CompletableFuture.completedFuture("message").thenApply(v->v.toUpperCase());
+        CompletableFuture cf = CompletableFuture.completedFuture("message").thenApplyAsync(String::toUpperCase);
+        //thenApplyAsync异步方法直接通过get无法获取到结果，thenApply同步方法可以直接获取到结果
+        System.out.println(cf.getNow(null));
+        //通过join来阻塞获取执行结果
+        System.out.println(cf.join());
+    }
+    //endregion
+
+    //region 5、使用定制的Executor在前一个阶段上异步应用函数
+    static ExecutorService executorService = Executors.newFixedThreadPool(3, new ThreadFactory() {
+        int count = 1;
+        @Override
+        public Thread newThread(Runnable r) {
+            return new Thread(r,"my-executor-"+count);
+        }
+    });
+
+    private static void thenApplyWithExecutorExample() {
+        CompletableFuture cf = CompletableFuture.completedFuture("message").thenApplyAsync(v->{
+            System.out.println("当前异步线程名称："+Thread.currentThread().getName());
+            try {
+                TimeUnit.SECONDS.sleep(1);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            return v.toUpperCase();
+        }, executorService);
+
+        System.out.println("直接通过get拿到的结果："+cf.getNow(null));
+
+        System.out.println("通过join拿到的结果："+cf.join());
+    }
+    //endregion
+
+    //region 6、消费前一阶段的结果
+    private static void thenAcceptExample() {
+        StringBuilder sb = new StringBuilder();
+        //CompletableFuture.completedFuture("thenAccept message").thenAccept(v->sb.append(v));
+        CompletableFuture<Void> cf = CompletableFuture.completedFuture("thenAccept message").thenAcceptAsync(v->sb.append(v));
+        //带async的操作必须通过join阻塞等待执行结束
+        cf.join();
+        System.out.println(sb.toString());
+    }
+    //endregion
+
+    //region 7、捕获异常
+    private static void completeExceptionallyExample() {
+        CompletableFuture<String> cf = CompletableFuture.completedFuture("message").thenApplyAsync(v->{
+            if(true) {
+                throw new RuntimeException("exception test!");
+            }
+            return v.toUpperCase();
+        }).exceptionally(e->{
+            System.out.println(e.getMessage());
+            return "出错了";
+        });
+        System.out.println(cf.join());
+    }
+    //endregion
+
+    //region 8、取消任务
+    private static void cancelExample() {
+        CompletableFuture cf1 = CompletableFuture.completedFuture("message").thenApplyAsync(v->{
+            try {
+                TimeUnit.SECONDS.sleep(1);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            return v.toUpperCase();
+        });
+        CompletableFuture cf2 = cf1.exceptionally(e->{
+            return "出错了";
+        });
+        boolean isCanceled = cf1.cancel(true);
+        System.out.println("cf1被取消了吗？"+isCanceled);
+        System.out.println("cf1完成了吗？"+cf1.isDone());
+
+        System.out.println("cf2执行结果："+cf2.join());
+    }
+    //endregion
+
+    //region 9、将前一个任务的执行结果(包括异常)作为参数传递给后一个任务
+    private static void thenComposeExample() {
+        long start = System.currentTimeMillis();
+
+        /*CompletableFuture cf = CompletableFuture.supplyAsync(() -> 3).thenCompose(i-> CompletableFuture.supplyAsync(()->i+1));
+        System.out.println(cf.join());*/
+
+        CompletableFuture cf = CompletableFuture.supplyAsync(() -> {
+            /*if(true){
+                throw new RuntimeException("出现异常了");
+            }*/
+
+            try {
+                TimeUnit.SECONDS.sleep(1);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            return 3;
+        }).handleAsync((v,e)->{
+            if(e==null){
+                System.out.println("前一个任务没有出现异常，处理结果为："+v);
+            }else {
+                System.out.println("前一个任务执行出现异常：" + e.getMessage());
+            }
+
+            try {
+                TimeUnit.SECONDS.sleep(2);
+            } catch (InterruptedException ex) {
+                ex.printStackTrace();
+            }
+
+            return v;
+        });
+        System.out.println(cf.join());
+
+        long end = System.currentTimeMillis();
+        System.out.println("执行结束，耗时：" + (end - start));
+    }
+    //endregion
+
+    //region 10、任务并行处理完成之后做一些事情(结果合并，并行任务完成后回调等)
+    private static void doSthWhenTasksCompleted() {
+        long start = System.currentTimeMillis();
+        String original = "Message";
+        CompletableFuture cf1 = CompletableFuture.completedFuture(original).thenApplyAsync(v->{
+            //模拟执行时间2s
+            try {
+                TimeUnit.SECONDS.sleep(2);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            return v.toUpperCase();
+        });
+        CompletableFuture cf2 = CompletableFuture.completedFuture(original).thenApplyAsync(v->{
+            //模拟执行时间1s
+            try {
+                TimeUnit.SECONDS.sleep(1);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            return v.toLowerCase();
+        });
+
+        //拿到最先执行完成的任务结果
+        /*CompletableFuture cf3 = cf1.applyToEither(cf2,v->{
+            return v+" from applyToEither";
+        });
+        System.out.println(cf3.join());*/
+
+        //执行结束仅仅做一些事情，但不处理并行任务的返回结果
+        /*CompletableFuture cf3 = cf1.runAfterBoth(cf2,()->{
+            System.out.println("执行结束，但是runAfterBoth拿不到执行结果");
+        });
+        System.out.println(cf3.join());*/
+
+        //执行结束获取每个任务的返回结果，进行处理
+        /*CompletableFuture cf3 = cf1.thenAcceptBoth(cf2,(v1,v2)->{
+            System.out.println(String.format("两个任务都执行结束了，结果v1=%s，v2=%s",v1,v2));
+        });
+        System.out.println(cf3.join());*/
+
+        //执行结束合并两个任务的执行结果
+        /*CompletableFuture cf3 = cf1.thenCombineAsync(cf2,(v1,v2)->{
+            return "合并执行结果："+v1+v2;
+        });
+        System.out.println(cf3.join());*/
+
+        //拿到最先执行完成的任务结果（类似applyToEither）
+        /*CompletableFuture cf3 = CompletableFuture.anyOf(cf1,cf2).whenComplete((v,e)->{
+            if(e==null){
+                System.out.println("取到其中一个执行结果："+v);
+            }
+        });
+        System.out.println(cf3.join());*/
+
+        CompletableFuture cf3 = CompletableFuture.allOf(cf1,cf2).whenComplete((v,e)->{
+            System.out.println(String.format("两个任务全部执行完成，cf1结果：%s，cf2结果：%s",cf1.getNow(null),cf2.getNow(null)));
+        });
+        System.out.println(cf3.join());
+
+        long end = System.currentTimeMillis();
+        System.out.println("执行时间ms："+(end-start));
+    }
+    //endregion
+
+}
+```
 
 ## 三、Future|FutureTask|CompletionService|CompletableFuture对比
 
@@ -252,3 +508,5 @@ public class CompletionServiceDemo{
 [20 个使用 Java CompletableFuture的例子](http://www.importnew.com/28319.html)
 
 [completablefuture-examples](https://github.com/manouti/completablefuture-examples)
+
+[CompletableFuture与CompletionStage使用](https://my.oschina.net/JackieRiver/blog/2054472)
