@@ -377,6 +377,8 @@ Buffer提供的方法：
 
 > Selector多路复用器提供选择已就绪的任务的能力，Selector会不断轮询注册在其上的Channel，如果某个Channel发生读或写操作，这个Channel就会处于就绪状态，会被Selector轮询出来，通过SelectionKey可以获取就绪的Channel进行后续IO操作。JDK NIO使用epoll替代select/poll，基于事件驱动而不是轮询所有fd状态，且没有最大连接句柄限制(select在32位机器上限制1024，64位机器上限制2048，poll基于链表存储也没有限制)，可以处理成千上万个客户端(1G内存可以处理10w)。
 
+![nio_selector模型.png](/images/io/nio_selector模型.png)
+
 创建Selector：
 
 ```java
