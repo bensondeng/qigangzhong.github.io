@@ -231,7 +231,7 @@ public class CompletionServiceDemo{
 
 ## 二、CompletableFuture
 
-> CompletableFuture类实现了CompletionStage接口，以及Future接口
+> CompletableFuture类实现了CompletionStage接口，以及Future接口，如果不指定自定义的线程池，则默认使用ForkJoinPool.commonPool()当做线程池
 
 ### 2.1 获取任务执行结果的方式
 
