@@ -152,6 +152,41 @@ kubectl get deployments
 kubectl get pods -o wide
 ```
 
+### 应用镜像升级、回滚
+
+```bash
+# 升级之前先查看一下当前的pod列表
+kubectl get deployments
+kubectl get pods
+# 通过set image命令升级镜像版本
+kubectl set image deployments/kubernetes-bootcamp kubernetes-bootcamp=jocatalin/kubernetes-bootcamp:v2
+# 再次查看pod列表会发现老的pod全部被停止，但没有删除，新启动了新的pod
+kubectl get pods
+
+# 通过service查看当前对外暴露的ip端口
+kubectl describe services/kubernetes-bootcamp
+export NODE_PORT=$(kubectl get services/kubernetes-bootcamp -o go-template='{{(index .spec.ports 0).nodePort}}')
+echo NODE_PORT=$NODE_PORT
+# 访问服务查看是否已被更新为新版本应用
+curl $(minikube ip):$NODE_PORT
+# 查看升级状态
+kubectl rollout status deployments/kubernetes-bootcamp
+# 通过pod的描述信息可以看到pod的事件日志
+kubectl describe pods
+
+# 操作一次失败的升级，镜像不存在
+kubectl set image deployments/kubernetes-bootcamp kubernetes-bootcamp=gcr.io/google-samples/kubernetes-bootcamp:v10
+# 查看状态
+kubectl get deployments
+kubectl get pods
+kubectl describe pods
+# 执行回滚版本的操作
+kubectl rollout undo deployments/kubernetes-bootcamp
+# 查看pod信息看是否回滚到上个版本
+kubectl get pods
+kubectl describe pods
+```
+
 ## 参考
 
 [kubernetes官方教程](https://kubernetes.io/docs/tutorials/hello-minikube/)
