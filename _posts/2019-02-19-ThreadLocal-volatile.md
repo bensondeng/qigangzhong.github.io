@@ -69,24 +69,27 @@ private static ThreadLocal<String> tls = ThreadLocal.withInitial(() -> "hello");
 
 ## 二、volatile
 
-### 1. 介绍
+### 1.介绍
 
-> 内存模型的三个概念:  
+> volatile关键字保证了线程会从主内存直接读取数据，写入时也会直接写入到主内存。
+>
+> 并发编程的三个问题中volatile关键字解决了哪个问题？  
 > **原子性**  volatile不能保证原子性  
 > **可见性**  volatile保证不同线程的可见性  
-> **有序性**  volatile可以一定程度保证有序性，可以防止指令重排序
+> **有序性**  volatile可以通过内存屏障（Memory Barrier）一定程度保证有序性，可以防止指令重排序
 >
 > 下面这段话摘自《深入理解Java虚拟机》：  
->　　“观察加入volatile关键字和没有加入volatile关键字时所生成的汇编代码发现，加入volatile关键字时，会多出一个lock前缀指令”，lock前缀指令实际上相当于一个内存屏障（也成内存栅栏），内存屏障会提供3个功能：
+> “观察加入volatile关键字和没有加入volatile关键字时所生成的汇编代码发现，加入volatile关键字时，会多出一个lock前缀指令”，lock前缀指令实际上相当于一个内存屏障（也成内存栅栏），内存屏障会提供3个功能：
+>
 > * 它确保指令重排序时不会把其后面的指令排到内存屏障之前的位置，也不会把前面的指令排到内存屏障的后面；即在执行到内存屏障这句指令时，在它前面的操作已经全部完成；
 > * 它会强制将对缓存的修改操作立即写入主存；
 > * 如果是写操作，它会导致其他CPU中对应的缓存行无效。
 >
 > 在多处理器下，为了保证各个处理器的缓存是一致的，就会实现缓存一致性协议，每个处理器通过嗅探在总线上传播的数据来检查自己缓存的值是不是过期了，当处理器发现自己缓存行对应的内存地址被修改，就会将当前处理器的缓存行设置成无效状态，当处理器对这个数据进行修改操作的时候，会重新从系统内存中把数据读到处理器缓存里。因此，经过分析我们可以得出如下结论：
+>
 > * Lock前缀的指令会引起处理器缓存写回内存；
 > * 一个处理器的缓存回写到内存会导致其他处理器的缓存失效；
 > * 当处理器发现本地缓存失效后，就会从内存中重读该变量数据，即可以获取当前最新值。
-
 
 ### 2. 应用场景
 
@@ -94,11 +97,11 @@ private static ThreadLocal<String> tls = ThreadLocal.withInitial(() -> "hello");
 
 ```java
 volatile boolean flag = false;
- 
+
 while(!flag){
     doSomething();
 }
- 
+
 public void setFlag() {
     flag = true;
 }
@@ -109,9 +112,9 @@ public void setFlag() {
 ```java
 class Singleton{
     private volatile static Singleton instance = null;
-     
+
     private Singleton() {}
-     
+
     public static Singleton getInstance() {
         if(instance==null) {
             synchronized (Singleton.class) {
@@ -125,6 +128,7 @@ class Singleton{
 ```
 
 ## 参考
+
 [ThreadLocal用法详解和原理](https://www.cnblogs.com/coshaho/p/5127135.html)
 
 [Java并发编程：深入剖析ThreadLocal](https://www.cnblogs.com/dolphin0520/p/3920407.html)
