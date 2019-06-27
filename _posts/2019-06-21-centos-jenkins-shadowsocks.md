@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "centos中安装jenkins"
+title:  "centos中安装jenkins、shadowsocks客户端"
 categories: tools
 tags:  jenkins
 author: 网络
