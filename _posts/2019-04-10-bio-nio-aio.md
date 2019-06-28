@@ -234,7 +234,7 @@ NIO与普通IO的主要区别:
 | 面向流(Stream Oriented) | 面向缓冲区(Buffer Oriented) |
 | 阻塞IO(Blocking IO)   | 非阻塞IO(Non Blocking IO) |
 | (无)                   | 选择器(Selectors)        |
-
+{: .table.table-bordered }
 
 NIO的优点：
 
@@ -936,7 +936,7 @@ public class ReadHandler implements CompletionHandler<Integer, ByteBuffer> {
 | 调试难度      | 简单      | 简单                | 复杂                        | 复杂                             |
 | 可靠性         | 非常差   | 差                   | 高                           | 高                                |
 | 吞吐量         | 低         | 中                   | 高                           | 高                                |
-
+{: .table.table-bordered }
 
 ## 参考
 
