@@ -3,7 +3,7 @@ layout: post
 title:  "ClassLoader"
 categories: JVM
 tags:  JVM
-author: 网络
+author: 转载
 ---
 
 * content
@@ -743,4 +743,4 @@ http://ifeve.com/wp-content/uploads/2014/03/JSR133%E4%B8%AD%E6%96%87%E7%89%881.p
 
 ## 参考
 
-[*****原文链接--深入理解Java类加载器(ClassLoader)](https://blog.csdn.net/javazejian/article/details/73413292)
+[原文链接--深入理解Java类加载器(ClassLoader)](https://blog.csdn.net/javazejian/article/details/73413292)
