@@ -41,3 +41,4 @@ vagrant/vagrant
 ```
 ## 参考
 
+[vagrant cloud](https://app.vagrantup.com/boxes/search)
