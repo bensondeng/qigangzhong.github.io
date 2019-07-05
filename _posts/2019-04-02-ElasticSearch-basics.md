@@ -27,14 +27,14 @@ author: 刚子
 
 下载[安装文件](https://www.elastic.co/downloads/past-releases/elasticsearch-5-5-3)到`/opt/elasticsearch`目录下面并解压
 
-```
+```bash
 >cd /opt/elasticsearch
 >tar -zxvf elasticsearch-5.5.3.tar.gz
 ```
 
 ### 2. 启动并访问
 
-```
+```bash
 >cd /opt/elasticsearch/elasticsearch-5.5.3
 >./bin/elasticsearch
 ##./bin/elasticsearch -d 后台启动
@@ -42,7 +42,7 @@ author: 刚子
 
 root账户启动会报错：can not run elasticsearch as root，创建独立的用户来启动
 
-```
+```bash
 >groupadd esgroup
 >useradd esuser -g esgroup
 >passwd esuser
@@ -51,7 +51,7 @@ root账户启动会报错：can not run elasticsearch as root，创建独立的�
 
 root用户关闭防火墙
 
-```
+```bash
 >vi /etc/selinux/config
 SELINUX=disabled
 >systemctl stop firewalld.service
@@ -62,7 +62,7 @@ SELINUX=disabled
 
 es配置可以使用ip访问
 
-```
+```bash
 >vi config/elasticsearch.yml
 network.host: 192.168.237.129   #或者0.0.0.0允许所有人访问
 >su root
@@ -76,14 +76,14 @@ vm.max_map_count=655360
 
 ### 3. 创建、删除索引
 
-```
+```bash
 curl -X PUT 'http://localhost:9200/weather'
 curl -X DELETE 'http://localhost:9200/weather'
 ```
 
 ### 4. 添加文档
 
-```
+```bash
 curl -XPUT "http://localhost:9200/movies/movie/1" -d'
 {
     "title": "The Godfather",
@@ -96,7 +96,7 @@ curl -XPUT "http://localhost:9200/movies/movie/1" -d'
 
 ### 5. 搜索所有文档
 
-```
+```bash
 http://localhost:9200/_search # 搜索所有索引和所有类型
 http://localhost:9200/movies/_search # 在电影索引中搜索所有类型
 http://localhost:9200/movies/movie/_search # 在电影索引中显式搜索电影类型的文档
@@ -104,13 +104,13 @@ http://localhost:9200/movies/movie/_search # 在电影索引中显式搜索电�
 
 ### 6. 安装中文分词插件
 
-```
+```bash
 >./bin/elasticsearch-plugin install https://github.com/medcl/elasticsearch-analysis-ik/releases/download/v5.5.3/elasticsearch-analysis-ik-5.5.3.zip
 ```
 
 ### 7. 创建索引，并对文档字段进行中文分词
 
-```
+```bash
 curl -X PUT 'http://localhost:9200/accounts' -d '
 {
   "mappings": {
@@ -135,11 +135,26 @@ curl -X PUT 'http://localhost:9200/accounts' -d '
     }
   }
 }'
+
+
+curl -XPUT "http://localhost:9200/accounts/person/1" -d'
+{
+    "user": "zhangsan",
+    "title": "管理员",
+    "desc": "我是系统管理员"
+}'
+
+curl -XPUT "http://localhost:9200/accounts/person/2" -d'
+{
+    "user": "lisi",
+    "title": "组长",
+    "desc": "我是组长"
+}'
 ```
 
 ### 8. 搜索指定字段
 
-```
+```bash
 curl 'http://localhost:9200/accounts/person/_search'  -d '
 {
   "query" : { "match" : { "desc" : "系统" }},
@@ -151,13 +166,17 @@ curl 'http://localhost:9200/accounts/person/_search'  -d '
 # size表示每页几条数据
 ```
 
-### 9. 配置文件
+### 9. 查询索引信息
 
-```
->vim config/elasticsearch.yml
-cluster.name=myesclustername
-
-node.name=node_001
+```bash
+# 列出所有的索引
+curl localhost:9200/_cat/indices?v
+# 查看索引的文档数量
+curl localhost:9200/_cat/count/accounts?v
+# 查看文档字段信息
+curl localhost:9200/accounts/person/_mapping
+# 删除索引
+curl  -X DELETE localhost:9200/accounts
 ```
 
 [重要配置的修改](https://www.elastic.co/guide/cn/elasticsearch/guide/current/important-configuration-changes.html#_%E6%8C%87%E5%AE%9A%E5%90%8D%E5%AD%97)
@@ -166,7 +185,7 @@ node.name=node_001
 
 * 添加雇员索引文档
 
-```
+```bash
 curl -X PUT "localhost:9200/megacorp/employee/1" -H 'Content-Type: application/json' -d'
 {
     "first_name" : "John",
@@ -180,7 +199,7 @@ curl -X PUT "localhost:9200/megacorp/employee/1" -H 'Content-Type: application/j
 
 * 创建文档，非更新
 
-```
+```bash
 PUT /website/blog/123?op_type=create
 # or
 PUT /website/blog/123/_create
@@ -188,19 +207,19 @@ PUT /website/blog/123/_create
 
 * 检查文档是否存在
 
-```
+```bash
 curl -i -XHEAD http://localhost:9200/website/blog/123
 ```
 
 * QueryString搜索
 
-```
+```bash
 curl -X GET "localhost:9200/megacorp/employee/_search?q=last_name:Smith"
 ```
 
 * 查询表达式(DSL:domain-specific language)搜索指定字段
 
-```
+```bash
 curl -X GET "localhost:9200/megacorp/employee/_search" -H 'Content-Type: application/json' -d'
 {
     "query" : {
@@ -214,7 +233,7 @@ curl -X GET "localhost:9200/megacorp/employee/_search" -H 'Content-Type: applica
 
 * 过滤器--对查询结果进行进一步过滤
 
-```
+```bash
 # 搜索姓氏为 Smith 的雇员，但这次我们只需要年龄大于 30 的
 curl -X GET "localhost:9200/megacorp/employee/_search" -H 'Content-Type: application/json' -d'
 {
@@ -238,7 +257,7 @@ curl -X GET "localhost:9200/megacorp/employee/_search" -H 'Content-Type: applica
 
 * 全文搜索
 
-```
+```bash
 curl -X GET "localhost:9200/megacorp/employee/_search" -H 'Content-Type: application/json' -d'
 {
     "query" : {
@@ -252,7 +271,7 @@ curl -X GET "localhost:9200/megacorp/employee/_search" -H 'Content-Type: applica
 
 * 短语搜索--精确匹配内容中出现短语的文档
 
-```
+```bash
 curl -X GET "localhost:9200/megacorp/employee/_search" -H 'Content-Type: application/json' -d'
 {
     "query" : {
@@ -266,7 +285,7 @@ curl -X GET "localhost:9200/megacorp/employee/_search" -H 'Content-Type: applica
 
 * 高亮搜索
 
-```
+```bash
 curl -X GET "localhost:9200/megacorp/employee/_search" -H 'Content-Type: application/json' -d'
 {
     "query" : {
@@ -291,7 +310,7 @@ curl -X GET "localhost:9200/megacorp/employee/_search" -H 'Content-Type: applica
 
 * 通过版本号更新数据
 
-```
+```bash
 curl -X PUT "localhost:9200/website/blog/1?version=1" -H 'Content-Type: application/json' -d'
 {
   "title": "My first blog entry",
@@ -302,32 +321,26 @@ curl -X PUT "localhost:9200/website/blog/1?version=1" -H 'Content-Type: applicat
 
 更多请参考[乐观并发控制](https://www.elastic.co/guide/cn/elasticsearch/guide/current/optimistic-concurrency-control.html#optimistic-concurrency-control)
 
-* 查看索引、文档信息
-
-```
-# 查看索引的文档数量
-GET _cat/count/freshsharepro?v
-
-# 查看文档字段信息
-GET freshsharepro/commodity/_mapping
-```
-
 ## 三、Kibana
 
 ### 下载安装
 
-从[下载地址](https://www.elastic.co/cn/downloads/past-releases/kibana-5-5-3)下载到`/opt/elasticsearch`目录下，安装方法参考[安装 Kibana](https://www.elastic.co/guide/cn/kibana/current/install.html)
+从[下载地址](https://www.elastic.co/cn/downloads/past-releases/kibana-5-5-3)下载到`/opt/elasticsearch`目录下并解压
+
+```bash
+tar -zxvf kibana-5.5.3-linux-x86_64.tar.gz
+```
 
 设置任何人都可以访问
 
-```
->vim confg/kibana.yml
+```bash
+>vim config/kibana.yml
 server.host: "0.0.0.0"
 ```
 
 ### 启动并访问
 
-```
+```bash
 >./bin/kibana
 >./bin/kibana &  #后面添加&代表后台启动，shell窗口执行exit命令后kibana会一直后台启动
 ```
@@ -340,7 +353,7 @@ server.host: "0.0.0.0"
 
 ### 英文分词示例
 
-```
+```bash
 PUT test/doc/1
 {
   "msg":"Eating an apple a day keeps doctor away"
@@ -363,7 +376,7 @@ POST test/_analyze
   "text": "Eating an apple a day keeps doctor away"
 }
 
-# 写分词器默认standard，也可以指定，写分词器一经指定就不能修改，如果修改的话只能重建索引
+# 新加一个字段，指定写分词器为english，写分词器一经指定就不能修改，如果修改的话只能重建索引
 PUT test/_mapping/doc
 {
   "properties": {
@@ -380,7 +393,14 @@ POST test/doc/2
   "msg_english":"Eating an apple a day keeps doctor away"
 }
 
-# 读分词器不指定的话默认与写分词器一致，一般来讲不需要特别指定读时分词器
+# 这时候再分析一下字段，发现eat已经可以匹配eating
+POST test/_analyze
+{
+  "field": "msg_english",
+  "text": "Eating an apple a day keeps doctor away"
+}
+
+# 尝试搜索一下看看，搜索分词器不指定的话默认与写分词器一致，一般来讲不需要特别指定搜索分词器
 POST test/_search
 {
   "query":{
@@ -390,12 +410,6 @@ POST test/_search
       }
     }
   }
-}
-
-POST test/_analyze
-{
-  "field": "msg_english",
-  "text": "Eating an apple a day keeps doctor away"
 }
 
 # standard分词器添加三个过滤器之后效果与english分词器一样，stemmer指的是词干提取
@@ -414,13 +428,13 @@ POST _analyze
 
 ### 安装使用中文分词插件ik
 
-```
+```bash
 >./bin/elasticsearch-plugin install https://github.com/medcl/elasticsearch-analysis-ik/releases/download/v5.5.3/elasticsearch-analysis-ik-5.5.3.zip
 ```
 
 * 指定索引中文档的分词器的类型为ik
 
-```
+```bash
 # 试一下IK的分词器分词效果
 POST _analyze
 {
@@ -481,7 +495,7 @@ GET test1/person/_mapping
 
 ### 自定义静态词库文件
 
-```
+```bash
 # 创建自定义词库文件my.dic
 >/opt/elasticsearch/elasticsearch-5.5.3/config/analysis-ik
 >vim my.dic
@@ -521,7 +535,7 @@ POST _analyze
 
 ### 自定义动态词库文件
 
-```
+```bash
 # 设置动态词库url地址
 >cd /opt/tomcat/apache-tomcat-8.5.37/webapps/ROOT
 >vim my.dic
@@ -594,7 +608,7 @@ public String getCustomDic(HttpServletRequest request,HttpServletResponse respon
 
 * 创建词库文件
 
-```
+```bash
 >cd /opt/elasticsearch/elasticsearch-5.5.3/config
 >mkdir analysis
 >cd analysis
@@ -605,7 +619,7 @@ public String getCustomDic(HttpServletRequest request,HttpServletResponse respon
 
 * 创建索引，添加自定义分词器，指定同义词过滤器、同义词库文件地址
 
-```
+```bash
 PUT /synonymtest
 {
     "settings": {
@@ -654,7 +668,7 @@ PUT /synonymtest
 
 * 给文档字段创建映射，指定自定义分词器
 
-```
+```bash
 PUT /synonymtest/mytype/_mapping
 {
     "mytype":{
@@ -673,7 +687,7 @@ PUT /synonymtest/mytype/_mapping
 
 * 添加数据
 
-```
+```bash
 PUT /synonymtest/mytype/1
 {
 "title": "番茄"
@@ -702,7 +716,7 @@ PUT /synonymtest/mytype/6
 
 * 搜索同义词
 
-```
+```bash
 POST /synonymtest/mytype/_search?pretty
 {
   "query": {
@@ -733,7 +747,7 @@ POST /synonymtest/mytype/_search?pretty
 
 * mysql创建同义词维护表
 
-```
+```bash
 DROP TABLE IF EXISTS `synonym_config`;
 CREATE TABLE `synonym_config` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -756,13 +770,13 @@ INSERT INTO `synonym_config` VALUES ('6', '你好,利好', '2019-04-02 17:27:06'
 
 [elasticsearch-analysis-dynamic-synonym](https://github.com/QigangZhong/elasticsearch-analysis-dynamic-synonym)
 
-```
+```bash
 mvn clean package
 ```
 
 在`target>release`目录下找到xxx.zip，放到`${es_home}/plugins/dynamic-synonym/`下解压，重启ES
 
-```
+```bash
 DELETE synonymtest
 
 PUT synonymtest
@@ -859,6 +873,7 @@ POST synonymtest/_analyze
 [Java API](https://www.elastic.co/guide/en/elasticsearch/client/java-api/current/index.html)
 
 ## 参考
+
 [ElasticSearch权威指南](https://www.elastic.co/guide/cn/elasticsearch/guide/current/index.html)
 
 [ElasticSearch-IK拓展自定义词库（2）：HTTP请求动态热词内容方式](https://my.oschina.net/jsonyang/blog/1782832)
