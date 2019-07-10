@@ -45,6 +45,42 @@ author: 网络
 
 ## Collection
 
+遍历Collection的方式：
+
+1.for-each
+
+```java
+Collection<Person> persons = new ArrayList<Person>();
+for (Person person : persons) {
+    System.out.println(person.name);  
+}
+```
+
+2.Iterator
+
+```java
+Collection<Person> persons = new ArrayList<Person>();
+Iterator iterator = persons.iterator();
+while (iterator.hasNext) {
+    System.out.println(iterator.next);  
+}
+```
+
+3.stream api
+
+```java
+Collection<Person> persons = new ArrayList<>();
+persons.stream().forEach(p->{
+    System.out.println(p.name);
+});
+persons.stream().forEach(new Consumer<Person>() {
+    @Override
+    public void accept(Person person) {
+        System.out.println(person.name);
+    }
+});
+```
+
 ### List
 
 #### ArrayList
