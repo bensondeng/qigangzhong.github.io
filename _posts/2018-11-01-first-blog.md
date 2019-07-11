@@ -113,17 +113,11 @@ public class MyClass{
 
 [在线生成表格](https://tool.lu/tables)
 
-### emoji
+### 15. 注脚
 
-:smiley:
+* 上标：30<sup>th</sup>
 
-[更多emoji参考](https://www.webfx.com/tools/emoji-cheat-sheet/)
-
-### 注脚
-
-* 上标：30^th^
-
-* 下标：H~2~O
+* 下标：H<sub>2</sub>O
 
 * 脚注：Content [^1]
 
