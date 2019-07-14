@@ -63,13 +63,13 @@ author: 刚子
 
 [通过kubeadm安装k8s--3](https://juejin.im/post/5cb7dde9f265da034d2a0dba)
 
+> 安装过程比较痛苦，要踩很多坑，如果想直接体验一下，可以直接使用[官方提供的通过minikube搭建的k8s集群](https://kubernetes.io/docs/tutorials/kubernetes-basics/)，同样可以学习到k8s的基础知识
+
 ### 安装k8s-dashboard
 
 [k8s-web-ui-dashboard安装--1](https://blog.csdn.net/networken/article/details/85607593)
 
 ## 三、Quick Start
-
-> 安装过程比较痛苦，要踩很多坑，如果想直接体验一下，可以直接使用[官方提供的通过minikube搭建的k8s集群](https://kubernetes.io/docs/tutorials/kubernetes-basics/)，同样可以学习到k8s的基础知识
 
 ### 发布应用
 
@@ -82,7 +82,7 @@ kubectl cluster-info
 # 新建的cluster默认有一个node(类型是master)
 kubectl get nodes
 
-# 根据镜像创建一个deployment
+# 根据镜像创建一个deployment，并直接运行
 kubectl run kubernetes-bootcamp --image=gcr.io/google-samples/kubernetes-bootcamp:v1 --port=8080
 
 # 创建一个nginx镜像的deployment
@@ -100,9 +100,12 @@ kubectl get deployments
 
 ### pod及容器操作
 
+一般不直接操作pod，原因是水平扩展的时候会被销毁，更新容器镜像版本的时候也会被销毁
+
 ```bash
-# 获取pod信息
+# 获取pod信息(-o wide可以查看pode的ip信息)
 kubectl get pods
+kubectl get pods -o wide
 # 获取pod描述信息（node，pods(ip，端口，镜像，卷，等等)，deployments）
 kubectl describe pods
 # 新开terminal执行proxy（pod是在一个独立、私有网络里面运行，所以需要使用proxy与之交互）
@@ -129,7 +132,9 @@ kubectl exec -ti $POD_NAME bash
 kubectl get pods
 # 获取service信息
 kubectl get services
-# 创建service，暴露pod
+# 创建service，暴露pod，type可选类型：ClusterIP(默认)，NodePort等（通过）
+# 通过NodePort暴露的端口所有的node+端口都可以访问，service自动负载均衡
+# type在生产环境一般使用LoadBalancer或者ExternalName
 kubectl expose deployment/kubernetes-bootcamp --type="NodePort" --port 8080
 # 查看service暴露到哪个端口
 kubectl describe services/kubernetes-bootcamp
@@ -221,8 +226,31 @@ kubectl get pods
 kubectl describe pods
 ```
 
+## networking
+
+![k8s-networking-flannel.jpg](/images/docker/k8s-networking-flannel.jpg)
+
+## 通过yml文件创建deployment，replicaset，service，pod
+
+```bash
+# 创建dir目录下所有yml文件中定义的资源
+kubectl create -f dir/
+```
+
+## k8s集群监控
+
+### 日志
+
+Fluentd（log转发）
+
+ELK（log索引）
+
+LogTrail（log UI查看）
+
 ## 参考
 
 [kubernetes官方教程](https://kubernetes.io/docs/tutorials/hello-minikube/)
 
 [kubectl命令行工具用法详解](https://www.jianshu.com/p/8710a3a0aadd)
+
+[Cluster Networking](https://kubernetes.io/docs/concepts/cluster-administration/networking/)
