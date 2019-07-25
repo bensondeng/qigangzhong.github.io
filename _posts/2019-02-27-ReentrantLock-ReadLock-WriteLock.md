@@ -261,3 +261,5 @@ public class ReadAndWriteLockTest {
 [ReadWriteLock读写锁的使用](https://www.jianshu.com/p/9cd5212c8841)
 
 [*****Java多线程之ReentrantLock与Condition](https://www.cnblogs.com/xiaoxi/p/7651360.html)
+
+[透彻理解Java并发编程](https://segmentfault.com/blog/ressmix_multithread?page=3)
