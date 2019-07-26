@@ -2,7 +2,7 @@
 layout: post
 title:  "springcloud-ribbon-feign(Finchley版)"
 categories: springcloud
-tags:  springcloud ribbon feign
+tags:  微服务 springcloud
 author: 网络
 ---
 

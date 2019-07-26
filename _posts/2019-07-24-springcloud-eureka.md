@@ -2,7 +2,7 @@
 layout: post
 title:  "springcloud-eureka(Finchley版)"
 categories: springcloud
-tags:  springcloud eureka
+tags:  微服务 springcloud
 author: 网络
 ---
 
