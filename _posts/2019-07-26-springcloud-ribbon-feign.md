@@ -32,6 +32,8 @@ feign采用基于接口的注解，默认集成了ribbon，所以也可以实现
 
 [示例代码](https://gitee.com/qigangzhong/springcloud.f/tree/master/springcloud.f.ribbon)，注册中心使用[eureka示例](https://qigangzhong.github.io/2019/07/24/springcloud-eureka/)中的[单节点注册中心](https://gitee.com/qigangzhong/springcloud.f/tree/master/springcloud.f.eureka/springcloud.f.eureka.server)。
 
+
+
 ### 示例服务端
 
 服务端没有特别的地方，就是一个普通的springboot restapi服务，注册到eureka注册中心，跟ribbon还没有任何关系
@@ -249,9 +251,73 @@ eureka.client.service-url.defaultZone=http://localhost:8761/eureka/
 # Hi zhangsan，i'm from port 8862
 ```
 
+### 修改负载均衡策略、超时时间
+
+配置的方式：
+
+```bash
+# 以配置的方式来定义ribbon的负载均衡策略，超时时间等，这个是为某个服务单独配置的
+# 修改服务的负载均衡策略
+service-hi-feign.ribbon.NFLoadBalancerRuleClassName=com.netflix.loadbalancer.BestAvailableRule
+# 请求连接超时时间
+service-hi-feign.ribbon.ConnectTimeout=3000
+# 请求处理超时时间
+service-hi-feign.ribbon.ReadTimeout=3000
+# 对所有请求都进行重试，false代表只对GET请求重试，对于写数据接口必须做幂等才行，谨慎配置！
+service-hi-feign.ribbon.OkToRetryOnAllOperations=true
+# 切换实例的重试次数，不包括首次调用
+service-hi-feign.ribbon.MaxAutoRetriesNextServer=2
+# 对当前实例的重试次数，不包括首次调用
+service-hi-feign.ribbon.MaxAutoRetries=2
+```
+
+代码配置的方式如下，不过好像重试的配置没有办法区分每个实例的重试次数还有切换实例的重试次数：
+
+```java
+import com.netflix.loadbalancer.BestAvailableRule;
+import com.netflix.loadbalancer.IRule;
+import feign.Request;
+import feign.Retryer;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class CustomRibbonConfig {
+    /**
+     * 负载均衡策略
+     */
+    @Bean
+    public IRule ribbonRule(){
+        return new BestAvailableRule();
+    }
+
+    //region 超时、重试次数设置
+    public static int connectTimeOutMillis = 3000;
+    public static int readTimeOutMillis = 3000;
+
+    @Bean
+    public Request.Options options() {
+        return new Request.Options(connectTimeOutMillis, readTimeOutMillis);
+    }
+
+    @Bean
+    public Retryer feignRetryer(){
+        Retryer retryer = new Retryer.Default(100, 1000, 2);
+        return retryer;
+    }
+    //endregion
+}
+```
+
 ## 参考
 
 [springcloud官网](https://spring.io/projects/spring-cloud)
+
+[Finchley.RELEASE documentation](https://cloud.spring.io/spring-cloud-static/Finchley.RELEASE/single/spring-cloud.html)
+
+[失败请求重试说明](https://cloud.spring.io/spring-cloud-static/Finchley.RELEASE/single/spring-cloud.html#retrying-failed-requests)
+
+[Spring Cloud各组件重试总结](http://www.itmuch.com/spring-cloud-sum/spring-cloud-retry/)
 
 [服务消费者（rest+ribbon）(Finchley版本)](https://blog.csdn.net/forezp/article/details/81040946)
 
