@@ -127,3 +127,5 @@ public class ServiceHiHystrix implements ServiceHi {
 [Finchley.RELEASE documentation](https://cloud.spring.io/spring-cloud-static/Finchley.RELEASE/single/spring-cloud.html)
 
 [断路器（Hystrix）(Finchley版本)](https://blog.csdn.net/forezp/article/details/81040990)
+
+[fallback & fallbackFactory](https://www.jianshu.com/p/3d804e99e613)
