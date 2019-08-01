@@ -25,6 +25,9 @@ zuul的主要功能是路由转发和过滤器。可以利用zuul来做以下事
 * 负载均衡
 * 请求鉴权
 * 数据、性能监控
+* 服务熔断
+* 服务限流
+* 其它...
 
 [示例代码](https://gitee.com/qigangzhong/springcloud.f/tree/master/springcloud.f.zuul)
 
