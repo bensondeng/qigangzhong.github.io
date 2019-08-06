@@ -377,6 +377,8 @@ hystrix+InfluxDB+grafana
 
 [springcloud官网](https://spring.io/projects/spring-cloud)
 
+[A-G各个版本的release notes](https://github.com/spring-projects/spring-cloud/wiki)
+
 [Finchley.RELEASE documentation](https://cloud.spring.io/spring-cloud-static/Finchley.RELEASE/single/spring-cloud.html)
 
 [Hystrix官方说明-Metrics and Monitoring](https://github.com/Netflix/Hystrix/wiki/Metrics-and-Monitoring)

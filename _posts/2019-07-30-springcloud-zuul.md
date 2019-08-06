@@ -590,6 +590,8 @@ http://localhost:8961/api/api-a/hi?name=zhangsan&token=abc
 
 [springcloud官网](https://spring.io/projects/spring-cloud)
 
+[A-G各个版本的release notes](https://github.com/spring-projects/spring-cloud/wiki)
+
 [Finchley.RELEASE documentation](https://cloud.spring.io/spring-cloud-static/Finchley.RELEASE/single/spring-cloud.html)
 
 [路由网关(zuul)(Finchley版本)](https://blog.csdn.net/forezp/article/details/81041012)

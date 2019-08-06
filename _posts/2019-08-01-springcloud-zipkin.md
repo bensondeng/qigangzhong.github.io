@@ -85,6 +85,8 @@ http://localhost:9411
 
 [springcloud官网](https://spring.io/projects/spring-cloud)
 
+[A-G各个版本的release notes](https://github.com/spring-projects/spring-cloud/wiki)
+
 [Finchley.RELEASE documentation](https://cloud.spring.io/spring-cloud-static/Finchley.RELEASE/single/spring-cloud.html)
 
 [openzipkin官方github](https://github.com/openzipkin/zipkin)

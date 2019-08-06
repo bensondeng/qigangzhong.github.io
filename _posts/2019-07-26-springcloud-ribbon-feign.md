@@ -313,6 +313,8 @@ public class CustomRibbonConfig {
 
 [springcloud官网](https://spring.io/projects/spring-cloud)
 
+[A-G各个版本的release notes](https://github.com/spring-projects/spring-cloud/wiki)
+
 [Finchley.RELEASE documentation](https://cloud.spring.io/spring-cloud-static/Finchley.RELEASE/single/spring-cloud.html)
 
 [失败请求重试说明](https://cloud.spring.io/spring-cloud-static/Finchley.RELEASE/single/spring-cloud.html#retrying-failed-requests)

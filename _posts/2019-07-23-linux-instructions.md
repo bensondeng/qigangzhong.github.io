@@ -192,6 +192,13 @@ kill $(ps aux --sort=-rss | grep <app name> | awk '{print $2}')
 df -h
 ```
 
+## 文件查找
+
+```bash
+# 在当前文件目录下面查找
+find . -name "*keyword*"
+```
+
 ## 参考
 
 [linux命令大全](https://www.runoob.com/linux/linux-command-manual.html)

@@ -209,6 +209,8 @@ eureka.client.service-url.defaultZone=http://localhost:8761/eureka/,http://local
 
 [springcloud官网](https://spring.io/projects/spring-cloud)
 
+[A-G各个版本的release notes](https://github.com/spring-projects/spring-cloud/wiki)
+
 [Finchley.RELEASE documentation](https://cloud.spring.io/spring-cloud-static/Finchley.RELEASE/single/spring-cloud.html)
 
 [服务的注册与发现Eureka(Finchley版本)](https://blog.csdn.net/forezp/article/details/81040925)
