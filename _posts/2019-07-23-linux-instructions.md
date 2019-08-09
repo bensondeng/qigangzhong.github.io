@@ -184,6 +184,18 @@ ps aux --sort -rss
 ps aux --sort=-rss | head -10
 # 杀掉某个名称的所有进程
 kill $(ps aux --sort=-rss | grep <app name> | awk '{print $2}')
+
+
+
+# 查找java进程
+ps -ef|grep java|grep -v grep
+# 将活跃对象信息导出到log文件
+jmap -histo:live [pid] >a.log
+# 利用jmap来生成dump
+jmap -dump:live,format=b,file=heap-dump.bin <pid>
+# 启动jar包的启动JVM参数中添加以下参数可以在OOM时自动生成dump文件
+-XX:+HeapDumpOnOutOfMemoryError
+
 ```
 
 ## 磁盘占用
