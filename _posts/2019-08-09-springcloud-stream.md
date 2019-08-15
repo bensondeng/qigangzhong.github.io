@@ -223,7 +223,8 @@ spring.rabbitmq.virtual-host=/
 
 # 指定默认的input这个管道对应的topic（对于rabbitmq来讲，就是exchange）
 spring.cloud.stream.bindings.myInputChannel1.destination=myExchange1
-# 指定默认的input这个管道对应的分组（对于rabbitmq来讲，就是queue），如果不指定的话会使用一个匿名的队列
+# 指定默认的input这个管道对应的【分组】（对于rabbitmq来讲，就是queue），如果不指定的话会使用一个匿名的队列
+# 如果不定义分组group（也就是rabbitmq的queue），启动两个consumer应用，producer发送一条消息后两个consumer都会收到消息，如果定义了分组，那么只有其中一个consumer应用会收到消息
 spring.cloud.stream.bindings.myInputChannel1.group=myQueue1
 
 spring.cloud.stream.bindings.myInputChannel2.destination=myExchange2
@@ -233,6 +234,18 @@ spring.cloud.stream.default.contentType=application/json
 ```
 
 对于发送的不同类型的消息，比如示例中的第一个消息是String类型，第二个消息是OrderDTO实体，最好使用不同的exchange和queue，测试过程发现如果使用相同的exchange来投递消息，会有序列化的问题
+
+#### 对象序列化
+
+默认情况下POJO是可以直接序列化的，但是在rabbitmq web ui上面获取消息的时候会发现是java类型对象，没有办法直观看到对象具体内容，如果想在web ui上看到json格式的对象（消息堆积的时候可能需要查看具体队列消息内容），则在consumer端声明channel的group（也就是rabbitmq的queue）的时候指定channel的content-type，producer端不需要动。
+
+```bash
+spring.cloud.stream.bindings.myInputChannel2.content-type=application/json
+```
+
+#### @SendTo
+
+consumer端接收到消息之后可以通过@SendTo发送到新的input管道中，可以通过另外一个listener来接收消息
 
 ### 使用rabbitmq的延时消息特性
 
