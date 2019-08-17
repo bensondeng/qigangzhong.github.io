@@ -77,6 +77,41 @@ public class ZuulGatewayApplication {
 }
 ```
 
+### 路由配置
+
+```bash
+spring.application.name=zuul-gateway
+server.port=8961
+# eureka地址配置，如果eureka是个集群，那么逗号隔开配置所有地址
+eureka.client.service-url.defaultZone=http://localhost:8761/eureka/
+# 每间隔2s，向eureka服务端发送一次心跳，证明自己依然“活着”
+eureka.instance.lease-renewal-interval-in-seconds=2
+# 告诉服务端，如果我5s之内没有给你发心跳，就代表我“死”了，将我剔除掉
+eureka.instance.lease-expiration-duration-in-seconds=5
+
+# 【路由配置】（通过service-id的方式来路由，不建议通过url的方式来路由）
+# 以/api-a/ 开头的请求都转发给service-a服务，以/api-b/开头的请求都转发给service-b服务
+zuul.routes.service-a.path=/api-a/**
+zuul.routes.service-a.service-id=service-a
+zuul.routes.service-b.path=/api-b/**
+zuul.routes.service-b.service-id=service-b
+# 忽略所有包含某关键词的请求
+zuul.ignored-patterns=/**/abc/*,/**/def
+# 所有的请求必须带指定的前缀
+zuul.prefix=/api
+# 去掉前缀后的请求才转发给后端，默认就是true不用指定
+zuul.strip-prefix=true
+```
+
+#### 如何查看所有的路由？
+
+访问`http://localhost:8961/actuator/routes`这个端点来查看，但是这个端点默认是不放开的，需要配置中放开，这里直接放开actuator下面的所有端点
+
+```bash
+# 启用所有端点，这样可以访问actuator下的所有端点，包括/actuator/routes，可以查看所有的路由规则
+management.endpoints.web.exposure.include=*
+```
+
 ### 自定义filter
 
 自定义filter通过`shouldFilter`方法返回值即可控制启用或者禁用，如果是第三方的filter，可以通过配置来启用或者禁用
@@ -295,7 +330,7 @@ http://localhost:8961/api/api-a/hi?name=zhangsan&token=abc
 
 zuul网关项目通过集成[spring-cloud-zuul-ratelimit](https://github.com/marcosbarbero/spring-cloud-zuul-ratelimit)组件可以实现限流的功能，限流的方式有四种：ORIGIN(请求来源ip), USER(用户), URL(匹配url), ROLE(角色)，基本可以满足生产需求。并且不需要做任何代码修改，只需要添加限流组件的依赖及相关配置即可。
 
-google官方的guava组件中的[RateLimiter](http://ifeve.com/guava-ratelimiter/)也可以实现限流。
+google官方的guava组件中的[RateLimiter](http://ifeve.com/guava-ratelimiter/)也可以实现限流，基于令牌桶算法。
 
 #### spring-cloud-zuul-ratelimit限流示例
 
@@ -585,6 +620,26 @@ public class RateLimitConfig {
 4.访问以下zuul地址，通过zuul来访问service-a这个服务，不断的请求这个接口，由于我们配置的限流策略是60s内访问`/hi`超过10次就限流，所以当访问第11次的时候，zuul网关接口就返回了429错误
 
 http://localhost:8961/api/api-a/hi?name=zhangsan&token=abc
+
+### 鉴权
+
+* 1. 共享session
+
+一般的鉴权逻辑写在pre filter里面就可以了，用户信息存储在公共的地方，例如redis
+
+* 2. oauth2+spring security
+
+### 其它
+
+* 跨域
+
+CorsFilter
+
+* cookie
+
+zuul.routes.service-a.sensitiveHeaders=空白，service-a服务端写到客户端的cookie就可以正常写入，否则会被拦截。
+
+zuul.sensitive-headers=空白，对所有的服务都放行
 
 ## 参考
 
