@@ -1,8 +1,8 @@
 ---
 layout: post
-title:  "spring-cloud-alibaba-nacos"
+title:  "spring-cloud-alibaba-sentinel"
 categories: springcloud
-tags:  微服务 springcloud spring-cloud-alibaba nacos
+tags:  微服务 springcloud spring-cloud-alibaba sentinel
 author: 网络
 ---
 
