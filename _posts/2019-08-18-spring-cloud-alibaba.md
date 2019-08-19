@@ -30,7 +30,7 @@ author: 网络
 ```bash
 tar -zxvf nacos-server-1.1.3.tar.gz
 cd nacos
-# 单机模式启动
+# 单机模式启动，使用嵌入式DB存储配置信息
 sh ./bin/startup.sh -m standalone
 ```
 
@@ -39,6 +39,51 @@ sh ./bin/startup.sh -m standalone
 ### nacos集群搭建
 
 [Nacos三种部署模式](https://nacos.io/zh-cn/docs/deployment.html)
+
+#### 配置信息持久化
+
+单机模式启动的nacos，配置信息存储在嵌入DB里面的，多个机器同时启动的话每个机器上的配置都是隔离的。如果要搭一个nacos集群，需要配置集群使用共同的DB来存储配置信息。
+
+在安装包下`conf/nacos-mysql.sql`文件中存储了mysql脚本，直接执行就可以了
+
+然后在`conf/application.properties`中配置mysql的连接信息
+
+```bash
+spring.datasource.platform=mysql
+
+db.num=1
+db.url.0=jdbc:mysql://localhost:3306/nacos?characterEncoding=utf8&connectTimeout=1000&socketTimeout=3000&autoReconnect=true
+db.user=root
+db.password=
+```
+
+#### 集群配置
+
+```bash
+cd conf
+cp cluster.conf.example cluster.conf
+vim cluster.conf
+--------------------------------------
+127.0.0.1:8841
+127.0.0.1:8842
+127.0.0.1:8843
+--------------------------------------
+
+# 如果是本地部署伪集群，可以复制bin/startup.sh并修改其中的端口号来启动多个nacos实例
+cd ../bin
+cp startup.sh startup-8841.sh
+cp startup.sh startup-8842.sh
+cp startup.sh startup-8843.sh
+
+# 然后修改每个脚本中的启动命令，添加-Dserver.port=8841，就可以实现不同端口启动
+
+# 启动3个实例
+sh startup-8841.sh
+sh startup-8842.sh
+sh startup-8843.sh
+```
+
+最后对集群的所有节点通过nginx等方式来做负载均衡就可以了，在springcloud的应用中使用统一的配置中心的地址就好。
 
 ### nacos作为注册中心的代码示例
 
@@ -254,7 +299,7 @@ testKey2=testValue2
 
 * Data ID
 
-服务本地配置文件中可以指定使用哪个配置项，不指定的话会使用默认的配置项（就是${spring.application.name}.properties）
+Data ID可以理解为就是一个Spring Cloud应用的配置文件名，服务本地配置文件中可以指定使用哪个配置项，不指定的话会使用默认的配置项（就是${spring.application.name}.properties）。完整的Data ID其实还包含环境信息，`${spring.cloud.nacos.config.prefix}-${spring.profile.active}.${spring.cloud.nacos.config.file-extension}`。
 
 ```bash
 # 默认配置文件名称就是应用名称
@@ -265,10 +310,21 @@ spring.cloud.nacos.config.file-extension=properties
 
 * Group
 
-可以指定配置分组，不指定的话使用默认值`DEFAULT_GROUP`，这个分组可以用来解决重名的问题
+可以指定配置分组，不指定的话使用默认值`DEFAULT_GROUP`
 
 ```bash
+# 默认的配置分组是DEFAULT_GROUP
 spring.cloud.nacos.config.group=DEFAULT_GROUP
+```
+
+* Namespace
+
+默认只有一个命名空间public，可以通过命名空间来进行配置隔离，不同的namespace下面可以出现相同的Group和Data ID
+
+```bash
+# 指定使用哪个配置命名空间，不指定则使用默认的public命名空间
+# 这里使用命名空间的ID而不是名称
+spring.cloud.nacos.config.namespace=3b4b0a9c-b249-439a-aedb-dbeda495dbd3
 ```
 
 #### 应用中使用配置
@@ -337,7 +393,54 @@ spring.cloud.nacos.config.server-addr=192.168.255.138:8848
 
 #### 多环境配置
 
-http://blog.didispace.com/spring-cloud-alibaba-nacos-config-2/
+配置的多环境有3种实现方式
+
+* 1.通过Data ID区分环境
+
+在springcloud的应用中通过spring的方式指定环境`spring.profiles.active=dev`，默认会查找nacos配置中心public命名空间下面的`${spring.application.name}-dev.properties`。所以在nacos配置中心新增一个以对应环境命名Data ID的配置项即可。
+
+完整的配置项Data ID格式为：`${spring.cloud.nacos.config.prefix}-${spring.profile.active}.${spring.cloud.nacos.config.file-extension}`
+
+* 2.通过Group来实现
+
+```bash
+# 不同的环境使用不同的group
+spring.cloud.nacos.config.group=DEV_GROUP
+```
+
+* 3.通过Namespace来实现（官方建议的方式）
+
+```bash
+# 不同的环境使用不同的namespace
+# 如果多环境配置打成一个jar包通过`java -Dspring.profiles.active=dev -jar xxx.jar`方式来启动的话，需要在项目中创建每个环境的配置文件（bootstrap-dev.properties），里面设置对应环境的命名空间
+spring.cloud.nacos.config.namespace=3b4b0a9c-b249-439a-aedb-dbeda495dbd3
+```
+
+#### 不同应用共享配置
+
+通过加载扩展配置的方式，不同的应用可以加载相同的配置项，也可以支持动态刷新，或者使用shared-dataids来实现
+
+```bash
+# 通过扩展配置来实现应用之间共享配置项
+spring.cloud.nacos.config.ext-config[0].data-id=actuator.properties
+spring.cloud.nacos.config.ext-config[0].group=DEFAULT_GROUP
+spring.cloud.nacos.config.ext-config[0].refresh=true
+spring.cloud.nacos.config.ext-config[1].data-id=log.properties
+spring.cloud.nacos.config.ext-config[1].group=DEFAULT_GROUP
+spring.cloud.nacos.config.ext-config[1].refresh=true
+
+# 也可以通过下面这种更简便的方式实现共享
+spring.cloud.nacos.config.shared-dataids=actuator.properties,log.properties
+spring.cloud.nacos.config.refreshable-dataids=actuator.properties,log.properties
+```
+
+#### 配置加载的优先级
+
+* A: 通过spring.cloud.nacos.config.shared-dataids定义的共享配置
+* B: 通过spring.cloud.nacos.config.ext-config[n]定义的加载配置
+* C: 通过内部规则（spring.cloud.nacos.config.prefix、spring.cloud.nacos.config.file-extension、spring.cloud.nacos.config.group这几个参数）拼接出来的配置
+
+优先级关系为：A < B < C
 
 ## 参考
 
@@ -348,3 +451,5 @@ http://blog.didispace.com/spring-cloud-alibaba-nacos-config-2/
 [使用Nacos实现服务注册与发现](http://blog.didispace.com/spring-cloud-alibaba-1/)
 
 [nacos文档](https://nacos.io/zh-cn/docs/what-is-nacos.html)
+
+[Spring-Cloud-Alibaba 系列](http://blog.didispace.com/tags/Spring-Cloud-Alibaba/)
