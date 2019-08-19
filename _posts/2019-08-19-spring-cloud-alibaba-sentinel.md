@@ -172,7 +172,7 @@ spring.cloud.sentinel.datasource.ds.nacos.rule-type=flow
 > * controlBehavior：流量控制效果（直接拒绝、Warm Up、匀速排队）
 > * clusterMode：是否为集群模式
 
-这个配置就跟上一个章节直接在sentinel控制台“簇点链路”手动添加“流控”这种方式是一样的效果，都是限制`/hi`接口的QPS=2。这样nacos中修改了配置也会即时同步到sentinel，即使服务重启也不会丢失。但是反过来如果修改sentinel中的规则不会同步回nacos配置中心，如果想实现sentinel控制台修改限流策略也同步到nacos配置中心的话，需要对sentinel服务器端源码做扩展，参考[翟永超这篇教程](http://blog.didispace.com/spring-cloud-alibaba-sentinel-2-4/)。
+这个配置就跟上一个章节直接在sentinel控制台“簇点链路”手动添加“流控”这种方式是一样的效果，都是限制`/hi`接口的QPS=2。这样nacos中修改了配置也会即时同步到sentinel，即使服务重启也不会丢失。但是反过来如果修改sentinel中的规则不会同步回nacos配置中心，如果想实现sentinel控制台修改限流策略也同步到nacos配置中心的话，需要对sentinel-dashboard服务器端源码做扩展，参考[翟永超这篇教程](http://blog.didispace.com/spring-cloud-alibaba-sentinel-2-4/)。
 
 #### 测试
 
@@ -259,7 +259,7 @@ public class HelloController {
 
 ### 测试
 
-重启应用，访问`http://192.168.237.128:8005/hi`，观察sentinel控制台`http://192.168.237.128:9001`簇点链路，会发现多了刚才HelloService中的方法，可以在上面添加限流和降级的规则。同样的这个规则默认是保存在应用内存的，如果应用重启规则就消失了。需要修改sentinal-dashboard源码支持规则同步到nacos配置中心。
+重启应用，访问`http://192.168.237.128:8005/hi`，观察sentinel控制台`http://192.168.237.128:9001`簇点链路，会发现多了刚才HelloService中的方法，可以在上面添加限流和降级的规则。同样的这个规则默认是保存在应用内存的，如果应用重启规则就消失了。需要修改sentinal-dashboard源码支持规则同步到nacos配置中心，参考[翟永超这篇教程](http://blog.didispace.com/spring-cloud-alibaba-sentinel-2-4/)。
 
 ## 参考
 
