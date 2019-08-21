@@ -330,7 +330,7 @@ http://localhost:8961/api/api-a/hi?name=zhangsan&token=abc
 
 zuul网关项目通过集成[spring-cloud-zuul-ratelimit](https://github.com/marcosbarbero/spring-cloud-zuul-ratelimit)组件可以实现限流的功能，限流的方式有四种：ORIGIN(请求来源ip), USER(用户), URL(匹配url), ROLE(角色)，基本可以满足生产需求。并且不需要做任何代码修改，只需要添加限流组件的依赖及相关配置即可。
 
-google官方的guava组件中的[RateLimiter](http://ifeve.com/guava-ratelimiter/)也可以实现限流，基于令牌桶算法。
+google官方的guava组件中的[RateLimiter](http://ifeve.com/guava-ratelimiter/)也可以实现限流，基于[令牌桶算法](https://en.wikipedia.org/wiki/Token_bucket)。
 
 #### spring-cloud-zuul-ratelimit限流示例
 
