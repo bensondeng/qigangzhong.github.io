@@ -530,7 +530,91 @@ public class RouteConfig {
 
 4.持续访问`http://localhost:8900/sa/hi?user=user1&name=test`可以发现当cpu使用超过设定的阀值就会返回429
 
-## 熔断降级
+## 熔断降级、重试
+
+后端服务接口超时或者报错的情况下，SCG可以集成hystrix进行熔断降级处理，支持重试。主要是通过Hystrix和Retry这两个filter实现的。
+
+### 网关项目支持熔断降级和重试
+
+pom依赖添加hystrix依赖
+
+```xml
+<!--hystrix熔断降级依赖-->
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-netflix-hystrix</artifactId>
+</dependency>
+```
+
+配置文件中添加hystrix、retry过滤器相关配置
+
+```bash
+# 12. hystrix fallback配置
+# 服务超时的时候才会跳转fallback页面，服务500异常不会
+spring.cloud.gateway.routes[0].id=hystrix_fallback_route
+spring.cloud.gateway.routes[0].uri=lb://service-a
+spring.cloud.gateway.routes[0].order=0
+spring.cloud.gateway.routes[0].filters[0]=StripPrefix=1
+spring.cloud.gateway.routes[0].filters[1].name=Hystrix
+# 指的是HystrixCommand的名称
+spring.cloud.gateway.routes[0].filters[1].args.name=fallbackcmd
+# 这里的uri仅支持forward:xxx
+spring.cloud.gateway.routes[0].filters[1].args.fallbackUri=forward:/fallback
+
+# 重试相关配置，服务出现异常的时候才会触发重试，超时不会，重试操作有风险，线上不建议使用，除非所有接口都做幂等
+spring.cloud.gateway.routes[0].filters[2].name=Retry
+spring.cloud.gateway.routes[0].filters[2].args.retries=3
+# 哪些状态码段需要重试，5xx
+spring.cloud.gateway.routes[0].filters[2].args.series=SERVER_ERROR
+# 哪些状态需要重试
+spring.cloud.gateway.routes[0].filters[2].args.statuses=BAD_GATEWAY, INTERNAL_SERVER_ERROR
+# 哪些异常需要重试
+spring.cloud.gateway.routes[0].filters[2].args.exceptions=java.io.IOException, java.util.concurrent.TimeoutException
+spring.cloud.gateway.routes[0].predicates[0]=Path=/sa/**
+
+hystrix.command.fallbackcmd.execution.isolation.thread.timeoutInMilliseconds: 3000
+```
+
+并且网关项目添加`/forback`对应的api接口
+
+```java
+@RestController
+public class FallbackController {
+
+    @GetMapping("/fallback")
+    public String fallback() {
+        return "Oops this is a fallback page!";
+    }
+}
+```
+
+同时微服务项目中添加一个测试接口，模拟网关调用微服务的异常和超时情况
+
+```java
+@GetMapping("/hello")
+public String sayHello(@RequestParam("name") String name) throws InterruptedException {
+    //模拟抛出异常
+    throw new RuntimeException("service-a服务接口/hello发生异常了");
+
+    /*//模拟随机超时
+    int secs=random.nextInt(5);
+    log.info("本次随机超时时间：{}s",secs);
+    TimeUnit.SECONDS.sleep(secs);
+    return String.format("Hello %s, i'm from service-a, port %s",name,port);*/
+}
+```
+
+#### 问题
+
+1.默认情况下网关在调用下游微服务的时候，如果微服务接口抛出400、500异常，fallback操作不会被执行，只有在接口超时的情况下才执行，如何自定义httpcode来执行fallback操作呢？
+
+<https://github.com/spring-cloud/spring-cloud-gateway/issues/1158>
+
+2.重试的操作默认情况下只有在下游接口出现500等报错情况才会触发，而接口超时的时候不会进行接口重试
+
+3.如何扩展Hystrix过滤器
+
+<https://www.throwable.club/2019/05/25/spring-cloud-gateway-hystrix/#%E4%BD%BF%E7%94%A8Hystrix%E5%AE%9A%E5%88%B6%E8%BF%87%E6%BB%A4%E5%99%A8>
 
 ## 其它
 
