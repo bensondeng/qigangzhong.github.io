@@ -293,7 +293,242 @@ http://localhost:8900/a/hi?name=john
 
 ## 限流
 
+### 通过RequestRateLimiter过滤器来限流
 
+SCG默认提供了一个内置的[RequestRateLimiter过滤器](https://cloud.spring.io/spring-cloud-gateway/reference/html/#_requestratelimiter_gatewayfilter_factory)来实现限流功能，它使用的是令牌桶算法，依赖redis存储限流的key（使用的是spring5的[Spring Data Redis Reactive](https://www.baeldung.com/spring-data-redis-reactive)）。
+
+#### 限流基础用法
+
+pom需要添加redis依赖
+
+```xml
+<!--利用redis限流的组件-->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-data-redis-reactive</artifactId>
+</dependency>
+```
+
+配置文件中添加限流相关的配置
+
+```bash
+# 11. redis限流配置
+# 以/sa/**开头的请求转发到service-a服务，并且作限流操作，限流条件是请求中的user参数或者ip地址（根据key-resolver决定）
+spring.cloud.gateway.routes[0].id=requestratelimiter_route
+spring.cloud.gateway.routes[0].uri=lb://service-a
+spring.cloud.gateway.routes[0].order=-1
+# 第一个参数：redis-rate-limiter.replenishRate，允许用户每秒处理多少个请求
+# 第二个参数：redis-rate-limiter.burstCapacity，令牌桶的容量，允许在每秒内完成的最大请求数
+# 第三个参数：使用 SpEL 按名称引用 bean，redis存储的key解析器
+spring.cloud.gateway.routes[0].filters[0]=StripPrefix=1
+spring.cloud.gateway.routes[0].filters[1].name=RequestRateLimiter
+spring.cloud.gateway.routes[0].filters[1].args.redis-rate-limiter.replenishRate=1
+spring.cloud.gateway.routes[0].filters[1].args.redis-rate-limiter.burstCapacity=2
+spring.cloud.gateway.routes[0].filters[1].args.key-resolver=#{@ipKeyResolver}
+spring.cloud.gateway.routes[0].predicates[0]=Path=/sa/**
+
+# 当keyResolver没有找到key时，是否拒绝请求，以及响应码
+spring.cloud.gateway.filter.request-rate-limiter.deny-empty-key=false
+spring.cloud.gateway.filter.request-rate-limiter.empty-key-status-code=429
+
+# redis配置，限流功能依赖redis
+spring.redis.timeout=5000ms
+spring.redis.database=13
+spring.redis.host=172.17.7.189
+spring.redis.port=6379
+spring.redis.password=rQw@VzjA$106
+```
+
+key的解析器是需要通过代码的方式提供的，测试代码提供了两种方式来限流
+
+```java
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.cloud.gateway.filter.ratelimit.KeyResolver;
+import org.springframework.context.annotation.Bean;
+import org.springframework.stereotype.Component;
+import reactor.core.publisher.Mono;
+import java.util.Objects;
+
+@Slf4j
+@Component
+public class RateLimitConfig {
+    /**
+     * 通过url中user参数来限流
+     * @return
+     */
+    @Bean
+    KeyResolver userKeyResolver() {
+        return exchange -> {
+            String user = exchange.getRequest().getQueryParams().getFirst("user");
+            log.info("user={}",user);
+            return Mono.just(Objects.requireNonNull(user));
+        };
+    }
+
+    /**
+     * 通过Ip地址来限流
+     * @return
+     */
+    @Bean
+    public KeyResolver ipKeyResolver() {
+        return exchange -> Mono.just(exchange.getRequest().getRemoteAddress().getHostName());
+    }
+}
+```
+
+通过上面的代码及配置可以实现基础的限流功能，可以根据url、header、cookie、ip等等方式来限流。
+
+也可以使用代码的方式去除本地配置文件配置（这里仅保留redis配置在配置文件中，也可以将redis配置代码化，实现完全的代码配置）
+
+```java
+@Configuration
+public class RouteConfig {
+    @Bean
+    public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {
+        return builder
+                .routes()
+                .route("requestratelimiter_route",r->r.path("/sa/**").filters(f->f.stripPrefix(1).requestRateLimiter().configure(c->c.setRateLimiter(redisRateLimiter()).setKeyResolver(ipKeyResolver))).uri("lb://service-a").order(-1))
+                .build();
+    }
+
+
+
+    //region redis限流相关bean
+    @Bean
+    RedisRateLimiter redisRateLimiter() {
+        return new RedisRateLimiter(1, 2);
+    }
+
+    @Autowired
+    KeyResolver ipKeyResolver;
+
+    @Bean
+    public ReactiveRedisTemplate<String, String> stringReactiveRedisTemplate(ReactiveRedisConnectionFactory reactiveRedisConnectionFactory) {
+        return new ReactiveRedisTemplate<>(reactiveRedisConnectionFactory, RedisSerializationContext.string());
+    }
+
+    @Bean
+    public ReactiveRedisConnectionFactory reactiveRedisConnectionFactory() {
+        RedisProperties properties = new RedisProperties();
+        properties.setHost("172.17.7.189");
+        properties.setPort(6379);
+        properties.setPassword("rQw@VzjA$106");
+        properties.setDatabase(13);
+        properties.setTimeout(Duration.ofMillis(60000));
+
+        RedisStandaloneConfiguration redisStandaloneConfiguration = new RedisStandaloneConfiguration();
+        redisStandaloneConfiguration.setDatabase(properties.getDatabase());
+        redisStandaloneConfiguration.setPort(properties.getPort());
+        redisStandaloneConfiguration.setPassword(RedisPassword.of(properties.getPassword()));
+        redisStandaloneConfiguration.setHostName(properties.getHost());
+
+        return new LettuceConnectionFactory(redisStandaloneConfiguration);
+    }
+    //endregion
+}
+```
+
+测试：
+
+1.启动eureka注册中心springcloud.f.eureka.server
+
+2.启动service-a服务springcloud.f.gateway.service-a
+
+3.启动SCG服务器springcloud.f.gateway.server
+
+4.持续访问`http://localhost:8900/sa/hi?user=user1&name=test`，超过限流次数会返回429
+
+#### 动态限流
+
+通过自定义的GatewayFilter可以实现根据服务器网络连接数、流量、CPU、内存等来进行动态限流。这些指标信息主要通过actuator组件获取，注入MetricsEndpoint可以拿到这些信息。有哪些指标是可以拿来用的呢？访问`http://localhost:8900/actuator/metrics`可以获取到所有的指标名称。
+
+自定义GatewayFilter：
+
+```java
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.actuate.metrics.MetricsEndpoint;
+import org.springframework.cloud.gateway.filter.GatewayFilter;
+import org.springframework.cloud.gateway.filter.GatewayFilterChain;
+import org.springframework.core.Ordered;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Component;
+import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Mono;
+import java.util.Objects;
+
+@Slf4j
+@Component
+public class RateLimitByCpuGatewayFilter implements GatewayFilter, Ordered {
+
+    @Autowired
+    private MetricsEndpoint metricsEndpoint;
+    private static final String METRIC_NAME = "system.cpu.usage";
+    private static final double MAX_USAGE = 0.1D;
+
+    @Override
+    public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+        // if (!enableRateLimit){
+        //     return chain.filter(exchange);
+        // }
+        Double systemCpuUsage = metricsEndpoint.metric(METRIC_NAME, null)
+                .getMeasurements()
+                .stream()
+                .filter(Objects::nonNull)
+                .findFirst()
+                .map(MetricsEndpoint.Sample::getValue)
+                .filter(Double::isFinite)
+                .orElse(0.0D);
+
+        boolean ok = systemCpuUsage < MAX_USAGE;
+
+        log.debug("system.cpu.usage: {} ok: {}",systemCpuUsage, ok);
+
+        if (!ok) {
+            exchange.getResponse().setStatusCode(HttpStatus.TOO_MANY_REQUESTS);
+            return exchange.getResponse().setComplete();
+        } else {
+            return chain.filter(exchange);
+        }
+    }
+
+    @Override
+    public int getOrder() {
+        return -1;
+    }
+}
+```
+
+路由配置里面添加这个filter
+
+```java
+@Configuration
+public class RouteConfig {
+    @Bean
+    public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {
+        return builder
+                .routes()
+                //根据CPU动态限流
+                .route("requestratelimiter_route",r->r.path("/sa/**").filters(f->f.stripPrefix(1).filter(rateLimitByCpuGatewayFilter)).uri("lb://service-a").order(-1))
+                .build();
+    }
+
+    //region CPU动态限流bean
+    @Autowired
+    RateLimitByCpuGatewayFilter rateLimitByCpuGatewayFilter;
+    //endregion
+}
+```
+
+测试：
+
+1.启动eureka注册中心springcloud.f.eureka.server
+
+2.启动service-a服务springcloud.f.gateway.service-a
+
+3.启动SCG服务器springcloud.f.gateway.server
+
+4.持续访问`http://localhost:8900/sa/hi?user=user1&name=test`可以发现当cpu使用超过设定的阀值就会返回429
 
 ## 熔断降级
 
@@ -390,3 +625,9 @@ public GlobalFilter c() {
 [Spring Cloud Gateway入门](http://www.ityouknow.com/springcloud/2018/12/12/spring-cloud-gateway-start.html)
 
 [spring cloud gateway系列教程](https://zhuanlan.zhihu.com/p/54697618)
+
+[Spring Cloud Gateway（限流）](https://windmt.com/2018/05/09/spring-cloud-15-spring-cloud-gateway-ratelimiter/)
+
+[Exploring the New Spring Cloud Gateway](https://www.baeldung.com/spring-cloud-gateway)
+
+[Spring Data Redis Reactive](https://www.baeldung.com/spring-data-redis-reactive)
