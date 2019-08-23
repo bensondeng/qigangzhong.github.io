@@ -268,3 +268,5 @@ public class HelloController {
 [spring-cloud-alibaba-examples](https://github.com/alibaba/spring-cloud-alibaba/tree/master/spring-cloud-alibaba-examples)
 
 [Spring-Cloud-Alibaba 系列](http://blog.didispace.com/tags/Spring-Cloud-Alibaba/)
+
+[阿里云ahas](https://ahas.console.aliyun.com)
