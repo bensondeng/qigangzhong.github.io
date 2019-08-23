@@ -30,10 +30,28 @@ author: 网络
 * 仅等待 Future集合中最快结束的任务完成（有可能因为它们试图通过不同的方式计算同一个值），并返回它的结果
 * 任务处理完成时的事件回调
 
-Future + Callable示例：
+Future + Callable + ExecutorService示例：
 
 ```java
-private static AtomicReference<ExecutorService> serviceRef = new AtomicReference();
+/**
+ * Executors提供的4中静态方法创建的4种线程池其实底层都是创建的ThreadPoolExecutor
+ * ThreadPoolExecutor 将根据 corePoolSize和 maximumPoolSize设置的边界自动调整池大小
+ * 当新任务在方法 execute(java.lang.Runnable) 中提交时，如果运行的线程少于 corePoolSize，则创建新线程来处理请求，即使其他辅助线程是空闲的
+ * 如果运行的线程多于 corePoolSize 而少于 maximumPoolSize，则仅当队列满时才创建新线程
+ * 如果无法将请求加入队列，则创建新的线程，除非创建此线程超出 maximumPoolSize，超过数量的任务将被拒绝
+ * 如果设置的 corePoolSize 和 maximumPoolSize 相同，则创建了固定大小的线程池
+ * 如果将 maximumPoolSize 设置为基本的无界值（如 Integer.MAX_VALUE），则允许池适应任意数量的并发任务
+ * 在大多数情况下，核心和最大池大小仅基于构造函数来设置，不过也可以使用 setCorePoolSize(int) 和 setMaximumPoolSize(int) 进行动态更改。
+ *
+ * 并不是先加入任务就一定会先执行，假设队列大小为 4，corePoolSize为2，maximumPoolSize为6，那么当加入15个任务时
+ * 执行的顺序类似这样：首先执行任务 1、2，然后任务3~6被放入队列。这时候队列满了，任务7、8、9、10 会被马上执行，而任务 11~15 则会抛出异常。最终顺序是：1、2、7、8、9、10、3、4、5、6。
+ * 当然这个过程是针对指定大小的ArrayBlockingQueue<Runnable>来说，如果是LinkedBlockingQueue<Runnable>，因为该队列无大小限制，maximumPoolSize会无效，队列大小不受控制，会有资源耗尽的风险
+ */
+public class ThreadPoolExecutorDemo {
+
+    //【线程池常用方式示例】
+    //项目中可以使用这个方式
+    private static AtomicReference<ExecutorService> serviceRef = new AtomicReference();
     //第一步，初始化线程池
     public static void init(String maxPoolSizeStr) {
         if (serviceRef.get() == null) {
@@ -82,6 +100,70 @@ private static AtomicReference<ExecutorService> serviceRef = new AtomicReference
             }
         }
     }
+
+
+
+
+
+    //Runnable + ThreadPoolExecutor示例
+    public static void main(String[] args) {
+        ThreadPoolExecutor executor=new ThreadPoolExecutor(
+                2,
+                3,
+                60,
+                TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(10));
+
+        for(int i=0;i<15;i++){
+            MyRunnable myRunnable = new MyRunnable(i);
+            executor.execute(myRunnable);
+            System.out.println("线程池中线程数目："+executor.getPoolSize()+
+                    "，队列中等待执行的任务数目："+executor.getQueue().size()+
+                    "，已执行完别的任务数目："+executor.getCompletedTaskCount());
+        }
+
+        executor.shutdown();
+    }
+}
+
+class MyRunnable implements Runnable {
+    private int taskNum;
+
+    public MyRunnable(int num) {
+        this.taskNum = num;
+    }
+
+    @Override
+    public void run() {
+        System.out.println("正在执行task "+taskNum);
+        try {
+            TimeUnit.SECONDS.sleep(3);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        System.out.println("task "+taskNum+"执行完毕");
+    }
+}
+
+class MyCallable<T> implements Callable<T> {
+    private T taskNum;
+
+    public MyCallable(T num) {
+        this.taskNum = num;
+    }
+
+    @Override
+    public T call() {
+        System.out.println("正在执行task "+taskNum);
+        try {
+            TimeUnit.SECONDS.sleep(3);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        System.out.println("task "+taskNum+"执行完毕");
+        return taskNum;
+    }
+}
 ```
 
 ### 1.2 FutureTask + Callable + ExecutorService/Thread 获取执行结果
@@ -116,8 +198,8 @@ public class FutureTaskDemo {
 
         //第二种方式，直接通过Thread执行FutureTask包装后的Callable
         // 注意这种方式和第一种方式效果是类似的，只不过一个使用的是ExecutorService，一个使用的是Thread
-        /*Task task = new Task();
-        FutureTask<Integer> futureTask = new FutureTask<Integer>(task);
+        /*MyCallable task = new MyCallable();
+        FutureTask<Integer> futureTask = new FutureTask<>(task);
         Thread thread = new Thread(futureTask);
         thread.start();*/
 
