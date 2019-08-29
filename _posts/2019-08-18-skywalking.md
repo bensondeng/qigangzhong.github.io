@@ -53,6 +53,10 @@ cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 
 打开`http://host:port/`就可以访问到UI界面，端口就是`webapp/webapp.yml`中配置的端口。
 
+### 集成ES，日志定期清理
+
+TODO
+
 ## 使用java-agent
 
 ### 集成探针到项目中
