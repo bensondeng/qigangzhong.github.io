@@ -228,6 +228,92 @@ public class AuthFilter implements GlobalFilter, Ordered {
 
 ## 限流
 
+### 集成sentinel来进行限流
+
+sentinel提供了对SCG的适配组件，
+
+pom文件添加sentinel相关依赖
+
+```xml
+<!--sentinel依赖-->
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-alibaba-sentinel</artifactId>
+</dependency>
+<!--sentinel针对gateway的适配器-->
+<dependency>
+    <groupId>com.alibaba.csp</groupId>
+    <artifactId>sentinel-spring-cloud-gateway-adapter</artifactId>
+    <version>1.6.0</version>
+</dependency>
+<!--sentinel组件依赖servlet-api-->
+<dependency>
+    <groupId>javax.servlet</groupId>
+    <artifactId>javax.servlet-api</artifactId>
+</dependency>
+```
+
+添加一个配置java类
+
+```java
+import com.alibaba.csp.sentinel.adapter.gateway.sc.SentinelGatewayFilter;
+import com.alibaba.csp.sentinel.adapter.gateway.sc.exception.SentinelGatewayBlockExceptionHandler;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.cloud.gateway.filter.GlobalFilter;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
+import org.springframework.http.codec.ServerCodecConfigurer;
+import org.springframework.web.reactive.result.view.ViewResolver;
+import java.util.Collections;
+import java.util.List;
+
+@Configuration
+public class GatewayConfiguration {
+
+    private final List<ViewResolver> viewResolvers;
+    private final ServerCodecConfigurer serverCodecConfigurer;
+
+    public GatewayConfiguration(ObjectProvider<List<ViewResolver>> viewResolversProvider,
+                                ServerCodecConfigurer serverCodecConfigurer) {
+        this.viewResolvers = viewResolversProvider.getIfAvailable(Collections::emptyList);
+        this.serverCodecConfigurer = serverCodecConfigurer;
+    }
+
+    @Bean
+    @Order(Ordered.HIGHEST_PRECEDENCE)
+    public SentinelGatewayBlockExceptionHandler sentinelGatewayBlockExceptionHandler() {
+        // Register the block exception handler for Spring Cloud Gateway.
+        return new SentinelGatewayBlockExceptionHandler(viewResolvers, serverCodecConfigurer);
+    }
+
+    @Bean
+    @Order(Ordered.HIGHEST_PRECEDENCE)
+    public GlobalFilter sentinelGatewayFilter() {
+        return new SentinelGatewayFilter();
+    }
+}
+```
+
+配置文件添加sentinel地址配置即可
+
+```bash
+# sentinel通信地址以及dashboard地址
+spring.cloud.sentinel.transport.port=8719
+spring.cloud.sentinel.transport.dashboard=127.0.0.1:9001
+```
+
+### 测试
+
+1.开启nacos，sentinel
+
+2.开启网关项目springcloud.alibaba.gateway.server，开启微服务项目springcloud.alibaba.gateway.service-hi
+
+3.访问`http://localhost:8900/service-hi/hi?name=test&token=abc`，然后观察sentinel-dashboard上的实时监控
+
+4.sentinel-dashboard上簇点链路菜单下可以看到路由信息，添加流控和降级规则后再次访问url观察效果
+
 ## 熔断降级
 
 ## 参考
