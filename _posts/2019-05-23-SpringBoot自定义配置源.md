@@ -1,8 +1,8 @@
 ---
 layout: post
 title: "SpringBoot自定义配置源(支持自动刷新)"
-categories: SpringBoot
-tags: SpringBoot config
+categories: springsoot
+tags: springsoot config
 author: 刚子
 ---
 
