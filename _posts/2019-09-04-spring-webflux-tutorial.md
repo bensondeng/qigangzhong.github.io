@@ -1,8 +1,8 @@
 ---
 layout: post
 title:  "Spring WebFlux 教程（译）"
-categories: java-basics
-tags:  java-basics
+categories: springboot
+tags:  java-basics springboot
 author: Lokesh Gupta
 ---
 
@@ -560,6 +560,8 @@ Spring MVC和Spring WebFlux都支持client-server模式，但是在并发模型�
 ## 参考
 
 [Spring WebFlux Tutorial](https://howtodoinjava.com/spring-webflux/spring-webflux-tutorial/)
+
+[配套测试代码](https://gitee.com/qigangzhong/java-basics/tree/master/webflux2)
 
 [Web on Reactive Stack](https://docs.spring.io/spring/docs/current/spring-framework-reference/web-reactive.html)
 
