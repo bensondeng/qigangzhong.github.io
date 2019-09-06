@@ -130,6 +130,433 @@ Flux<String> flux = Flux.fromIterable(Arrays.asList("A", "B", "C"));
 flux.subscribe();
 ```
 
+在Spring WebFlux中，我们调用返回monos和fluxes的响应式api/函数，你的controllers会返回monos和fluxes类型的数据。当你调用一个返回mono或flux的api时会立即返回，函数的结果会在数据可用的时候通过mono或flux发送给你。
+
+> 为了构建一个真正的非阻塞的应用，我们必须以非阻塞的方式创建/使用所有的组件，例如client，controller，service，甚至是db。如果其中一个阻塞了请求，我们就达不到目的了。
+
+## 4. Spring Boot WebFlux 示例
+
+### 4.1 Maven依赖
+
+加入`spring-boot-starter-webflux`, `spring-boot-starter-data-mongodb-reactive`, `spring-boot-starter-test` 和 `reactor-test`依赖
+
+```xml
+<properties>
+    <java.version>1.8</java.version>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
+    <maven.complianceLevel>1.8</maven.complianceLevel>
+    <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+    <springboot.version>2.0.3.RELEASE</springboot.version>
+</properties>
+
+<dependencies>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-webflux</artifactId>
+    </dependency>
+
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-data-mongodb-reactive</artifactId>
+    </dependency>
+
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-test</artifactId>
+        <scope>test</scope>
+    </dependency>
+
+    <dependency>
+        <groupId>io.projectreactor</groupId>
+        <artifactId>reactor-test</artifactId>
+        <scope>test</scope>
+    </dependency>
+
+    <dependency>
+        <groupId>org.glassfish</groupId>
+        <artifactId>javax.el</artifactId>
+        <version>3.0.1-b11</version>
+    </dependency>
+</dependencies>
+
+<dependencyManagement>
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-parent</artifactId>
+            <version>${springboot.version}</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
+    </dependencies>
+</dependencyManagement>
+```
+
+### 4.2 配置
+
+* WebFlux配置
+
+```java
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.reactive.config.EnableWebFlux;
+import org.springframework.web.reactive.config.WebFluxConfigurer;
+
+@Configuration
+@EnableWebFlux
+public class WebFluxConfig implements WebFluxConfigurer
+{
+}
+```
+
+* MongoDB配置
+
+```java
+import com.mongodb.reactivestreams.client.MongoClient;
+import com.mongodb.reactivestreams.client.MongoClients;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.mongodb.config.AbstractReactiveMongoConfiguration;
+import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
+import org.springframework.data.mongodb.repository.config.EnableReactiveMongoRepositories;
+
+@Configuration
+@EnableReactiveMongoRepositories(basePackages = "com.qigang.webflux2.dao")
+public class MongoConfig extends AbstractReactiveMongoConfiguration
+{
+    @Bean
+    @Override
+    public ReactiveMongoTemplate reactiveMongoTemplate() {
+        return new ReactiveMongoTemplate(reactiveMongoClient(), getDatabaseName());
+    }
+
+    @Override
+    public MongoClient reactiveMongoClient() {
+        //return MongoClients.create("mongodb://user:password@localhost:27017/testdb");
+        return MongoClients.create("mongodb://192.168.237.128:27017/testdb");
+    }
+
+    @Override
+    protected String getDatabaseName() {
+        return "testdb";
+    }
+}
+```
+
+> 这里可以使用docker启动mongo进行测试：
+>
+> ```bash
+> # 使用docker启动mongo服务器
+> docker run --name testmongo -p 27017:27017 -v $PWD/db:/data/db -d mongo:latest
+> # 查看进程
+> docker ps
+> # 利用docker镜像中的mongo客户端测试mongo服务器
+> docker run -it mongo:latest mongo --host 192.168.237.128
+> ```
+
+* 应用配置
+
+```java
+import org.springframework.beans.factory.config.PropertyPlaceholderConfigurer;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.ClassPathResource;
+
+@Configuration
+public class AppConfig
+{
+    @Bean
+    public static PropertyPlaceholderConfigurer getPropertyPlaceholderConfigurer()
+    {
+        PropertyPlaceholderConfigurer ppc = new PropertyPlaceholderConfigurer();
+        ppc.setLocation(new ClassPathResource("application.properties"));
+        ppc.setIgnoreUnresolvablePlaceholders(true);
+        return ppc;
+    }
+}
+```
+
+* 配置文件
+
+```bash
+server.port=8888
+```
+
+* 日志配置
+
+```xml
+<configuration>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{5} - %msg%n
+            </pattern>
+        </encoder>
+    </appender>
+
+    <logger name="org.springframework" level="DEBUG" additivity="false">
+        <appender-ref ref="STDOUT" />
+    </logger>
+
+    <root level="ERROR">
+        <appender-ref ref="STDOUT" />
+    </root>
+
+</configuration>
+```
+
+* Spring Boot入口类
+
+```java
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class WebfluxFunctionalApp {
+    public static void main(String[] args) {
+        SpringApplication.run(WebfluxFunctionalApp.class, args);
+    }
+}
+```
+
+### 4.3 REST controller
+
+```java
+import com.qigang.webflux2.model.Employee;
+import com.qigang.webflux2.service.EmployeeService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
+@RestController
+public class EmployeeController {
+    @Autowired
+    private EmployeeService employeeService;
+
+    @RequestMapping(value = { "/create", "/" }, method = RequestMethod.POST)
+    @ResponseStatus(HttpStatus.CREATED)
+    @ResponseBody
+    public void create(@RequestBody Employee e) {
+        employeeService.create(e);
+    }
+
+    @RequestMapping(value = "/{id}", method = RequestMethod.GET)
+    @ResponseBody
+    public ResponseEntity<Mono<Employee>> findById(@PathVariable("id") Integer id) {
+        Mono<Employee> e = employeeService.findById(id);
+        HttpStatus status = e != null ? HttpStatus.OK : HttpStatus.NOT_FOUND;
+        return new ResponseEntity<Mono<Employee>>(e, status);
+    }
+
+    @RequestMapping(value = "/name/{name}", method = RequestMethod.GET)
+    @ResponseBody
+    public Flux<Employee> findByName(@PathVariable("name") String name) {
+        return employeeService.findByName(name);
+    }
+
+    @RequestMapping(method = RequestMethod.GET, produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @ResponseBody
+    public Flux<Employee> findAll() {
+        Flux<Employee> emps = employeeService.findAll();
+        return emps;
+    }
+
+    @RequestMapping(value = "/update", method = RequestMethod.PUT)
+    @ResponseStatus(HttpStatus.OK)
+    public Mono<Employee> update(@RequestBody Employee e) {
+        return employeeService.update(e);
+    }
+
+    @RequestMapping(value = "/delete/{id}", method = RequestMethod.DELETE)
+    @ResponseStatus(HttpStatus.OK)
+    public void delete(@PathVariable("id") Integer id) {
+        employeeService.delete(id).subscribe();
+    }
+}
+```
+
+### 4.4 service类
+
+```java
+import com.qigang.webflux2.model.Employee;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+public interface IEmployeeService
+{
+    void create(Employee e);
+
+    Mono<Employee> findById(Integer id);
+
+    Flux<Employee> findByName(String name);
+
+    Flux<Employee> findAll();
+
+    Mono<Employee> update(Employee e);
+
+    Mono<Void> delete(Integer id);
+}
+
+
+
+import com.qigang.webflux2.dao.EmployeeRepository;
+import com.qigang.webflux2.model.Employee;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+@Service
+public class EmployeeService implements IEmployeeService {
+
+    @Autowired
+    EmployeeRepository employeeRepo;
+
+    @Override
+    public void create(Employee e) {
+        employeeRepo.save(e).subscribe();
+    }
+
+    @Override
+    public Mono<Employee> findById(Integer id) {
+        return employeeRepo.findById(id);
+    }
+
+    @Override
+    public Flux<Employee> findByName(String name) {
+        return employeeRepo.findByName(name);
+    }
+
+    @Override
+    public Flux<Employee> findAll() {
+        return employeeRepo.findAll();
+    }
+
+    @Override
+    public Mono<Employee> update(Employee e) {
+        return employeeRepo.save(e);
+    }
+
+    @Override
+    public Mono<Void> delete(Integer id) {
+        return employeeRepo.deleteById(id);
+    }
+}
+```
+
+### 4.5 DAO
+
+```java
+import com.qigang.webflux2.model.Employee;
+import org.springframework.data.mongodb.repository.Query;
+import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
+import reactor.core.publisher.Flux;
+
+public interface EmployeeRepository extends ReactiveMongoRepository<Employee, Integer> {
+    @Query("{ 'name': ?0 }")
+    Flux<Employee> findByName(final String name);
+}
+```
+
+### 4.6 Model
+
+```java
+import org.springframework.context.annotation.Scope;
+import org.springframework.context.annotation.ScopedProxyMode;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+@Scope(scopeName = "request", proxyMode = ScopedProxyMode.TARGET_CLASS)
+@Document
+public class Employee {
+
+    @Id
+    int id;
+    String name;
+    long salary;
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public long getSalary() {
+        return salary;
+    }
+
+    public void setSalary(long salary) {
+        this.salary = salary;
+    }
+
+    @Override
+    public String toString() {
+        return "Employee [id=" + id + ", name=" + name + ", salary=" + salary + "]";
+    }
+}
+```
+
+## 5. 测试
+
+启动应用，测试请求和响应
+
+* POST `localhost:8888/create`，创建两个employee
+
+```json
+{
+    "id":1,
+    "name":"user_1",
+    "salary":101
+}
+
+{
+    "id":2,
+    "name":"user_2",
+    "salary":102
+}
+```
+
+* PUT `localhost:8888/update`，更新employee
+
+```json
+{
+    "id":2,
+    "name":"user_2",
+    "salary":103
+}
+```
+
+* GET `localhost:8888`，获取employee
+
+注意Postman是一个阻塞的客户端，它只会在收集到两个employee对象之后才展示响应结果。为了检验非阻塞响应的特性，在chrome浏览器中访问`localhost:8888`，结果会在数据可用时以events(Content-Type=text/event-stream)的形式一个一个出现。为了更好展现结果，可以在contorller中添加一个延时。
+
+## 总结
+
+Spring MVC和Spring WebFlux都支持client-server模式，但是在并发模型以及阻塞特点及线程上有很大不同。Spring MVC假设一个应用可以阻塞当前线程，而Spring WebFlux的线程默认是非阻塞的。这是spring webflux和mvc之间最主要的区别。
+
+响应式以及非阻塞通常情况下不会使程序跑的更快，它的好处是可以使用少量、固定的线程数以及更少的内存开销来扩展应用程序。它让应用程序在一定负载下更有弹性，因为应用可以用更容易预期的方式来扩展。
+
 ## 参考
 
 [Spring WebFlux Tutorial](https://howtodoinjava.com/spring-webflux/spring-webflux-tutorial/)
