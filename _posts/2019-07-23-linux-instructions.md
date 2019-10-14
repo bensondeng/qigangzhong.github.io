@@ -211,6 +211,26 @@ df -h
 find . -name "*keyword*"
 ```
 
+## 硬链接、软连接
+
+```bash
+# 带-s表示创建的是软连接，也就是快捷方式，不带-s则创建的是硬链接
+ln -s src_file_or_dir dest_link
+```
+
+![linux_soft_link.jpg](/images/linux/linux_soft_link.jpg)
+![linux_hard_link.jpg](/images/linux/linux_hard_link.jpg)
+
+## 压缩、解压缩
+
+```bash
+tar -cvf target.tar aaa.txt bbb.html ccc/
+tar -zcvf target.tar.gz aaa.txt
+
+tar -xvf target.tar
+tar -zxvf target.tar
+```
+
 ## 参考
 
 [linux命令大全](https://www.runoob.com/linux/linux-command-manual.html)
