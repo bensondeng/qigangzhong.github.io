@@ -20,9 +20,6 @@ MapReduce思想在生活中处处可见。或多或少都曾接触过这种思�
 
 现在我们到一起，把所有人的统计数加在一起。这就是“Reduce”。
 
-
-
-
 ### 1.1. MapReduce 设计构思
 
 MapReduce是一个分布式运算程序的编程框架，核心功能是将用户编写的业务逻辑代码和自带默认组件整合成一个完整的分布式运算程序，并发运行在Hadoop集群上。
@@ -34,8 +31,6 @@ Map和Reduce为程序员提供了一个清晰的操作接口抽象描述。MapRe
 * Map: `(k1; v1) → [(k2; v2)]`
 
 * Reduce: `(k2; [v2]) → [(k3; v3)]`
-
-  
 
 一个完整的mapreduce程序在分布式运行时有三类实例进程：
 1. `MRAppMaster` 负责整个程序的过程调度及状态协调
@@ -51,7 +46,7 @@ Map和Reduce为程序员提供了一个清晰的操作接口抽象描述。MapRe
 ## 2. MapReduce 编程规范
 > MapReduce 的开发一共有八个步骤, 其中 Map 阶段分为 2 个步骤，Shuffle 阶段 4 个步骤，Reduce 阶段分为 2 个步骤
 
-##### Map 阶段 2 个步骤
+#####  Map 阶段 2 个步骤
 
 1. 设置 InputFormat 类, 将数据切分为 Key-Value**(K1和V1)** 对, 输入到第二步
 2. 自定义 Map 逻辑, 将第一步的结果转换成另外的 Key-Value（**K2和V2**） 对, 输出结果
@@ -95,6 +90,13 @@ Map和Reduce为程序员提供了一个清晰的操作接口抽象描述。MapRe
 ##### Step 2. Mapper
 
 ```java
+// key就是K1，行的偏移量
+// value就是V1，一行的数据
+// 转换后的K2,V2结果形式为：
+//     hadoop 1
+//     hadoop 1
+//     hive   1
+//     ...
 public class WordCountMapper extends Mapper<LongWritable,Text,Text,LongWritable> {
     @Override
     public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
@@ -111,15 +113,20 @@ public class WordCountMapper extends Mapper<LongWritable,Text,Text,LongWritable>
 ##### Step 3. Reducer
 
 ```java
+// 在reduce操作之前还有一个shuffle操作，将map得到的K2,V2转换为新的K2,V2（K2不变，V2转换成一个集合，集合中的值都是常量1），
+// 新的K2,V2的结果形式为：
+//     hadoop <1,1>
+//     hive   <1>
+//     ...
+//
+// reduce操作会将新的K2,V2转换为K3,V3，也就是最终的结果，结果形式为：
+//     hadoop 2
+//     hive   1
+//     ...
 public class WordCountReducer extends Reducer<Text,LongWritable,Text,LongWritable> {
     /**
      * 自定义我们的reduce逻辑
      * 所有的key都是我们的单词，所有的values都是我们单词出现的次数
-     * @param key
-     * @param values
-     * @param context
-     * @throws IOException
-     * @throws InterruptedException
      */
     @Override
     protected void reduce(Text key, Iterable<LongWritable> values, Context context) throws IOException, InterruptedException {
@@ -135,9 +142,11 @@ public class WordCountReducer extends Reducer<Text,LongWritable,Text,LongWritabl
 ##### Step 4. 定义主类, 描述 Job 并提交 Job
 
 ```java
+// 主类的父类及实现接口固定
 public class JobMain extends Configured implements Tool {
     @Override
     public int run(String[] args) throws Exception {
+        //super.getConf()获取到的就是main函数中的Configuration实例
         Job job = Job.getInstance(super.getConf(), JobMain.class.getSimpleName());
         //打包到集群上面运行时候，必须要添加以下配置，指定程序的main函数
         job.setJarByClass(JobMain.class);
@@ -150,7 +159,7 @@ public class JobMain extends Configured implements Tool {
         //设置我们map阶段完成之后的输出类型
         job.setMapOutputKeyClass(Text.class);
         job.setMapOutputValueClass(LongWritable.class);
-        //第三步，第四步，第五步，第六步，省略
+        //第三步，第四步，第五步，第六步，省略（也就是shuffle阶段的4个步骤：分区，排序，规约，分组）
         //第七步：设置我们的reduce类
         job.setReducerClass(WordCountReducer.class);
         //设置我们reduce阶段完成之后的输出类型
@@ -158,15 +167,20 @@ public class JobMain extends Configured implements Tool {
         job.setOutputValueClass(LongWritable.class);
         //第八步：设置输出类以及输出路径
         job.setOutputFormatClass(TextOutputFormat.class);
-        TextOutputFormat.setOutputPath(job,new Path("hdfs://192.168.52.250:8020/wordcount_out"));
+        //输出的目录不能存在，否则会报异常，所以需要判断目录是否存在，存在则主动删除
+        Path path = new Path("hdfs://192.168.52.250:8020/wordcount_out");
+        TextOutputFormat.setOutputPath(job, path);
+        FileSystem fileSystem = FileSystem.get(new URI("hdfs://192.168.52.250:8020"), new Configuration());
+        if(fileSystem.exist(path)){
+            fileSystem.delete(path, true);
+        }
+
         boolean b = job.waitForCompletion(true);
         return b?0:1;
     }
 
     /**
      * 程序main函数的入口类
-     * @param args
-     * @throws Exception
      */
     public static void main(String[] args) throws Exception {
         Configuration configuration = new Configuration();
@@ -228,21 +242,23 @@ hadoop jar hadoop_hdfs_operate-1.0-SNAPSHOT.jar cn.itcast.hdfs.demo1.JobMain
 
 ## 5. MapReduce 分区
 
-在 MapReduce 中, 通过我们指定分区, 会将同一个分区的数据发送到同一个 Reduce 当中进行处理
+在 MapReduce 中, 通过我们指定分区, 会**将同一个分区的数据发送到同一个 Reduce 当中进行处理**
 
 例如: 为了数据的统计, 可以把一批类似的数据发送到同一个 Reduce 当中, 在同一个 Reduce 当中统计相同类型的数据, 就可以实现类似的数据分区和统计等
 
-其实就是相同类型的数据, 有共性的数据, 送到一起去处理
+其实就是相同类型的数据, 有共性的数据, 送到一起去处理。当有多个分区，多个reducer的时候会生成多个最终处理结果文件。
 
 Reduce 当中默认的分区只有一个
 
 ![](http://ppw6n93dt.bkt.clouddn.com/436a751da0a85379e40ad41e176fecae.png)
 
-> Step 1. 定义 Mapper
+##### Step 1. 定义 Mapper
 
 这个 Mapper 程序不做任何逻辑, 也不对 Key-Value 做任何改变, 只是接收数据, 然后往下发送
 
 ```java
+//K1是行偏移量，V2是一行的数据
+//在进行分区计算的时候的原则：按照哪个字段分区，那就把这个字段包含在K1中
 public class MyMapper extends Mapper<LongWritable,Text,Text,NullWritable>{
     @Override
     protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
@@ -251,7 +267,32 @@ public class MyMapper extends Mapper<LongWritable,Text,Text,NullWritable>{
 }
 ```
 
-##### Step 2. 定义 Reducer 逻辑
+##### Step 2. 自定义 Partitioner
+
+主要的逻辑就在这里, 这也是这个案例的意义, 通过 Partitioner 将数据分发给不同的 Reducer
+
+```java
+/**
+ * 这里的输入类型与我们map阶段的输出类型相同
+ */
+public class MyPartitioner extends Partitioner<Text,NullWritable>{
+    /**
+     * 返回值为分区编号，表示我们的数据要去到哪个分区
+     * 返回值只是一个分区的标记，标记所有相同的数据去到指定的分区
+     */
+    @Override
+    public int getPartition(Text text, NullWritable nullWritable, int i) {
+        String result = text.toString().split("\t")[5];
+        if (Integer.parseInt(result) > 15){
+            return 1;
+        }else{
+            return 0;
+        }
+    }
+}
+```
+
+##### Step 3. 定义 Reducer 逻辑
 
 这个 Reducer 也不做任何处理, 将数据原封不动的输出即可
 
@@ -260,23 +301,6 @@ public class MyReducer extends Reducer<Text,NullWritable,Text,NullWritable> {
     @Override
     protected void reduce(Text key, Iterable<NullWritable> values, Context context) throws IOException, InterruptedException {
         context.write(key,NullWritable.get());
-    }
-}
-```
-
-##### Step 3. 自定义 Partitioner
-
-主要的逻辑就在这里, 这也是这个案例的意义, 通过 Partitioner 将数据分发给不同的 Reducer
-
-```java
-public class PartitonerOwn extends Partitioner<Text,LongWritable> {
-    @Override
-    public int getPartition(Text text, LongWritable longWritable, int i) {
-        if(text.toString().length() >=5 ){
-            return  0;
-        }else{
-            return 1;
-        }
     }
 }
 ```
