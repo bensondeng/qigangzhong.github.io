@@ -72,7 +72,7 @@ HDFS由四部分组成，[HDFS Client]()、[NameNod]()[e]()、[DataNode]()和[Se
 - 定期合并 fsimage和fsedits，并推送给NameNode。
 - 在紧急情况下，可辅助恢复 NameNode。
 
-## 4:NameNode和DataNode
+## 4. NameNode和DataNode
 
 ![](http://ppw6n93dt.bkt.clouddn.com/dd4c1fc1a4139ad51d3be4e4ac8e39f3.png)
 
@@ -112,7 +112,7 @@ DataNode负责处理文件内容的读写请求，数据流不经过NameNode，�
 
 5、Data Node 周期性向NameNode汇报缓存数据块信息
 
-## 5:HDFS的副本机制和机架感知
+## 5. HDFS的副本机制和机架感知
 
 ### 5.1 HDFS 文件副本机制
 
@@ -315,7 +315,7 @@ hdfs  dfs  -chown  -R hadoop:hadoop  /install.log
 
 ~~~shell
 hdfs dfs  -mkdir -p /user/root/dir    #创建hdfs文件夹
-hdfs dfsadmin -setQuota 2  dir      # 给该文件夹下面设置最多上传两个文件，发现只能上传一个文件
+hdfs dfsadmin -setQuota 2  dir      # 给该文件夹下面设置最多上传两个文件，发现只能上传一个文件，目录本身会占用一个位置
 ~~~
 
 ~~~shell
@@ -402,7 +402,7 @@ hdfs dfs -text /benchmarks/TestDFSIO/io_read/part-00000
 hadoop jar /export/servers/hadoop-2.7.5/share/hadoop/mapreduce/hadoop-mapreduce-client-jobclient-2.7.5.jar   TestDFSIO -clean
 ~~~
 
-## 9.HDFS 文件写入过程
+## 9. HDFS 文件写入过程
 
 ![img](https://img-blog.csdn.net/20180716221908696?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3doZHhqYnc=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70) 
 
