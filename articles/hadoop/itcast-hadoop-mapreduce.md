@@ -339,7 +339,69 @@ public class PartitionMain  extends Configured implements Tool {
 }
 ```
 
-## 6. MapReduce 排序和序列化
+##  6. MapReduce 中的计数器
+
+计数器是收集作业统计信息的有效手段之一，用于质量控制或应用级统计。计数器还可辅助诊断系统故障。如果需要将日志信息传输到 map 或 reduce 任务， 更好的方法通常是看能否用一个计数器值来记录某一特定事件的发生。对于大型分布式作业而言，使用计数器更为方便。除了因为获取计数器值比输出日志更方便，还有根据计数器值统计特定事件的发生次数要比分析一堆日志文件容易得多。
+
+hadoop内置计数器列表
+
+| **MapReduce任务计数器** | **org.apache.hadoop.mapreduce.TaskCounter**                  |
+| ----------------------- | ------------------------------------------------------------ |
+| 文件系统计数器          | org.apache.hadoop.mapreduce.FileSystemCounter                |
+| FileInputFormat计数器   | org.apache.hadoop.mapreduce.lib.input.FileInputFormatCounter |
+| FileOutputFormat计数器  | org.apache.hadoop.mapreduce.lib.output.FileOutputFormatCounter |
+| 作业计数器              | org.apache.hadoop.mapreduce.JobCounter                       |
+
+**每次mapreduce执行完成之后，我们都会看到一些日志记录出来，其中最重要的一些日志记录如下截图**
+
+**![](http://ppw6n93dt.bkt.clouddn.com/0eed84b755ad580902a3d1e41924e4ee.png)**
+
+**所有的这些都是MapReduce的计数器的功能，既然MapReduce当中有计数器的功能，我们如何实现自己的计数器？？？**
+
+> **需求：以以上分区代码为案例，统计map接收到的数据记录条数**
+
+##### 第一种方式
+
+**第一种方式定义计数器，通过context上下文对象可以获取我们的计数器，进行记录**
+**通过context上下文对象，在map端使用计数器进行统计**
+
+```java
+public class PartitionMapper  extends Mapper<LongWritable,Text,Text,NullWritable>{
+    //map方法将K1和V1转为K2和V2
+    @Override
+    protected void map(LongWritable key, Text value, Context context) throws Exception{
+        Counter counter = context.getCounter("MR_COUNT", "MyRecordCounter");
+        counter.increment(1L);
+        context.write(value,NullWritable.get());
+    }
+}
+```
+
+**运行程序之后就可以看到我们自定义的计数器在map阶段读取了七条数据**
+
+**![](http://ppw6n93dt.bkt.clouddn.com/4e4d470b51f927286f466eb0392380e0.png)**
+
+##### 第二种方式
+
+**通过enum枚举类型来定义计数器**
+统计reduce端数据的输入的key有多少个
+
+```java
+public class PartitionerReducer extends Reducer<Text,NullWritable,Text,NullWritable> {
+   public static enum Counter{
+       MY_REDUCE_INPUT_RECORDS,MY_REDUCE_INPUT_BYTES
+   }
+    @Override
+    protected void reduce(Text key, Iterable<NullWritable> values, Context context) throws IOException, InterruptedException {
+       context.getCounter(Counter.MY_REDUCE_INPUT_RECORDS).increment(1L);
+       context.write(key, NullWritable.get());
+    }
+}
+```
+
+**![](http://ppw6n93dt.bkt.clouddn.com/4d51ef596ae0731edabeb0caa6d101cd.png)**
+
+## 7. MapReduce 排序和序列化
 
 * 序列化 (Serialization) 是指把结构化对象转化为字节流
 
@@ -513,4 +575,436 @@ public class SecondarySort  extends Configured implements Tool {
         ToolRunner.run(entries,new SecondarySort(),args);
     }
 }
+```
+
+## 规约Combiner
+
+##### 概念
+
+每一个 map 都可能会产生大量的本地输出，Combiner 的作用就是对 map 端的输出先做一次合并，以减少在 map 和 reduce 节点之间的数据传输量，以提高网络IO 性能，是 MapReduce 的一种优化手段之一
+
+- combiner 是 MR 程序中 Mapper 和 Reducer 之外的一种组件
+- combiner 组件的父类就是 Reducer
+- combiner 和 reducer 的区别在于运行的位置
+  - Combiner 是在每一个 maptask 所在的节点运行
+  - Reducer 是接收全局所有 Mapper 的输出结果
+- combiner 的意义就是对每一个 maptask 的输出进行局部汇总，以减小网络传输量
+
+##### 实现步骤
+
+1. 自定义一个 combiner 继承 Reducer，重写 reduce 方法
+2. 在 job 中设置 `job.setCombinerClass(CustomCombiner.class)`
+
+combiner 能够应用的前提是不能影响最终的业务逻辑，而且，combiner 的输出 kv 应该跟 reducer 的输入 kv 类型要对应起来
+
+## MapReduce案例-流量统计
+
+### 需求一: 统计求和
+
+统计每个手机号的上行数据包总和，下行数据包总和，上行总流量之和，下行总流量之和
+分析：以手机号码作为key值，上行流量，下行流量，上行总流量，下行总流量四个字段作为value值，然后以这个key，和value作为map阶段的输出，reduce阶段的输入
+
+##### Step 1: 自定义map的输出value对象FlowBean
+
+```java
+public class FlowBean implements Writable {
+    private Integer upFlow;
+    private Integer  downFlow;
+    private Integer upCountFlow;
+    private Integer downCountFlow;
+    @Override
+    public void write(DataOutput out) throws IOException {
+        out.writeInt(upFlow);
+        out.writeInt(downFlow);
+        out.writeInt(upCountFlow);
+        out.writeInt(downCountFlow);
+    }
+    @Override
+    public void readFields(DataInput in) throws IOException {
+        this.upFlow = in.readInt();
+        this.downFlow = in.readInt();
+        this.upCountFlow = in.readInt();
+        this.downCountFlow = in.readInt();
+    }
+    public FlowBean() {
+    }
+    public FlowBean(Integer upFlow, Integer downFlow, Integer upCountFlow, Integer downCountFlow) {
+        this.upFlow = upFlow;
+        this.downFlow = downFlow;
+        this.upCountFlow = upCountFlow;
+        this.downCountFlow = downCountFlow;
+    }
+    public Integer getUpFlow() {
+        return upFlow;
+    }
+    public void setUpFlow(Integer upFlow) {
+        this.upFlow = upFlow;
+    }
+    public Integer getDownFlow() {
+        return downFlow;
+    }
+    public void setDownFlow(Integer downFlow) {
+        this.downFlow = downFlow;
+    }
+    public Integer getUpCountFlow() {
+        return upCountFlow;
+    }
+    public void setUpCountFlow(Integer upCountFlow) {
+        this.upCountFlow = upCountFlow;
+    }
+    public Integer getDownCountFlow() {
+        return downCountFlow;
+    }
+    public void setDownCountFlow(Integer downCountFlow) {
+        this.downCountFlow = downCountFlow;
+    }
+    @Override
+    public String toString() {
+        return "FlowBean{" +
+                "upFlow=" + upFlow +
+                ", downFlow=" + downFlow +
+                ", upCountFlow=" + upCountFlow +
+                ", downCountFlow=" + downCountFlow +
+                '}';
+    }
+}
+```
+
+##### Step 2: 定义FlowMapper类
+
+```java
+public class FlowCountMapper extends Mapper<LongWritable,Text,Text,FlowBean> {
+    @Override
+    protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
+       //1:拆分手机号
+        String[] split = value.toString().split("\t");
+        String phoneNum = split[1];
+        //2:获取四个流量字段
+        FlowBean flowBean = new FlowBean();
+        flowBean.setUpFlow(Integer.parseInt(split[6]));
+        flowBean.setDownFlow(Integer.parseInt(split[7]));
+        flowBean.setUpCountFlow(Integer.parseInt(split[8]));
+        flowBean.setDownCountFlow(Integer.parseInt(split[9]));
+
+        //3:将k2和v2写入上下文中
+        context.write(new Text(phoneNum), flowBean);
+    }
+}
+```
+
+##### Step 3: 定义FlowReducer类
+
+```java
+public class FlowCountReducer extends Reducer<Text,FlowBean,Text,FlowBean> {
+    @Override
+    protected void reduce(Text key, Iterable<FlowBean> values, Context context) throws IOException, InterruptedException {
+       //封装新的FlowBean
+        FlowBean flowBean = new FlowBean();
+        Integer upFlow = 0;
+        Integer  downFlow = 0;
+        Integer upCountFlow = 0;
+        Integer downCountFlow = 0;
+        for (FlowBean value : values) {
+            upFlow  += value.getUpFlow();
+            downFlow += value.getDownFlow();
+            upCountFlow += value.getUpCountFlow();
+            downCountFlow += value.getDownCountFlow();
+        }
+        flowBean.setUpFlow(upFlow);
+        flowBean.setDownFlow(downFlow);
+        flowBean.setUpCountFlow(upCountFlow);
+        flowBean.setDownCountFlow(downCountFlow);
+        //将K3和V3写入上下文中
+        context.write(key, flowBean);
+    }
+}
+
+```
+
+##### Step 4: 程序main函数入口FlowMain
+
+```java
+public class JobMain extends Configured implements Tool {
+
+    //该方法用于指定一个job任务
+    @Override
+        public int run(String[] args) throws Exception {
+        //1:创建一个job任务对象
+        Job job = Job.getInstance(super.getConf(), "mapreduce_flowcount");
+        //如果打包运行出错，则需要加该配置
+        job.setJarByClass(JobMain.class);
+        //2:配置job任务对象(八个步骤)
+
+        //第一步:指定文件的读取方式和读取路径
+        job.setInputFormatClass(TextInputFormat.class);
+        //TextInputFormat.addInputPath(job, new Path("hdfs://node01:8020/wordcount"));
+        TextInputFormat.addInputPath(job, new Path("file:///D:\\input\\flowcount_input"));
+
+
+
+        //第二步:指定Map阶段的处理方式和数据类型
+         job.setMapperClass(FlowCountMapper.class);
+         //设置Map阶段K2的类型
+          job.setMapOutputKeyClass(Text.class);
+        //设置Map阶段V2的类型
+          job.setMapOutputValueClass(FlowBean.class);
+
+
+          //第三（分区），四 （排序）
+          //第五步: 规约(Combiner)
+          //第六步 分组
+
+
+          //第七步：指定Reduce阶段的处理方式和数据类型
+          job.setReducerClass(FlowCountReducer.class);
+          //设置K3的类型
+           job.setOutputKeyClass(Text.class);
+          //设置V3的类型
+           job.setOutputValueClass(FlowBean.class);
+
+           //第八步: 设置输出类型
+           job.setOutputFormatClass(TextOutputFormat.class);
+           //设置输出的路径
+           TextOutputFormat.setOutputPath(job, new Path("file:///D:\\out\\flowcount_out"));
+
+
+
+        //等待任务结束
+           boolean bl = job.waitForCompletion(true);
+
+           return bl ? 0:1;
+    }
+
+    public static void main(String[] args) throws Exception {
+        Configuration configuration = new Configuration();
+
+        //启动job任务
+        int run = ToolRunner.run(configuration, new JobMain(), args);
+        System.exit(run);
+
+    }
+}
+```
+
+### 需求二: 上行流量倒序排序（递减排序）
+
+分析，以需求一的输出数据作为排序的输入数据，自定义FlowBean,以FlowBean为map输出的key，以手机号作为Map输出的value，因为MapReduce程序会对Map阶段输出的key进行排序
+
+##### Step 1: 定义FlowBean实现WritableComparable实现比较排序
+
+Java 的 compareTo 方法说明:
+
+- compareTo 方法用于将当前对象与方法的参数进行比较。
+- 如果指定的数与参数相等返回 0。
+- 如果指定的数小于参数返回 -1。
+- 如果指定的数大于参数返回 1。
+
+例如：`o1.compareTo(o2);` 返回正数的话，当前对象（调用 compareTo 方法的对象 o1）要排在比较对象（compareTo 传参对象 o2）后面，返回负数的话，放在前面
+
+~~~java
+public class FlowBean implements WritableComparable<FlowBean> {
+    private Integer upFlow;
+    private Integer  downFlow;
+    private Integer upCountFlow;
+    private Integer downCountFlow;
+    public FlowBean() {
+    }
+
+    public FlowBean(Integer upFlow, Integer downFlow, Integer upCountFlow, Integer downCountFlow) {
+        this.upFlow = upFlow;
+        this.downFlow = downFlow;
+        this.upCountFlow = upCountFlow;
+        this.downCountFlow = downCountFlow;
+    }
+
+    @Override
+    public void write(DataOutput out) throws IOException {
+        out.writeInt(upFlow);
+        out.writeInt(downFlow);
+        out.writeInt(upCountFlow);
+        out.writeInt(downCountFlow);
+    }
+
+    @Override
+    public void readFields(DataInput in) throws IOException {
+        upFlow = in.readInt();
+        downFlow = in.readInt();
+        upCountFlow = in.readInt();
+        downCountFlow = in.readInt();
+    }
+
+    public Integer getUpFlow() {
+        return upFlow;
+    }
+
+    public void setUpFlow(Integer upFlow) {
+        this.upFlow = upFlow;
+    }
+    
+    public Integer getDownFlow() {
+        return downFlow;
+    }
+    
+    public void setDownFlow(Integer downFlow) {
+        this.downFlow = downFlow;
+    }
+    
+    public Integer getUpCountFlow() {
+        return upCountFlow;
+    }
+    public void setUpCountFlow(Integer upCountFlow) {
+        this.upCountFlow = upCountFlow;
+    }
+    public Integer getDownCountFlow() {
+        return downCountFlow;
+    }
+    public void setDownCountFlow(Integer downCountFlow) {
+        this.downCountFlow = downCountFlow;
+    }
+    @Override
+    public String toString() {
+        return upFlow+"\t"+downFlow+"\t"+upCountFlow+"\t"+downCountFlow;
+    }
+    @Override
+    public int compareTo(FlowBean o) {
+        return this.upCountFlow > o.upCountFlow ?-1:1;
+    }
+}
+~~~
+
+##### Step 2: 定义FlowMapper
+
+```java
+public class FlowCountSortMapper extends Mapper<LongWritable,Text,FlowBean,Text> {
+    @Override
+    protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
+        FlowBean flowBean = new FlowBean();
+        String[] split = value.toString().split("\t");
+
+        //获取手机号，作为V2
+        String phoneNum = split[0];
+        //获取其他流量字段,封装flowBean，作为K2
+        flowBean.setUpFlow(Integer.parseInt(split[1]));
+        flowBean.setDownFlow(Integer.parseInt(split[2]));
+        flowBean.setUpCountFlow(Integer.parseInt(split[3]));
+        flowBean.setDownCountFlow(Integer.parseInt(split[4]));
+
+        //将K2和V2写入上下文中
+        context.write(flowBean, new Text(phoneNum));
+
+    }
+}
+
+```
+
+##### Step 3: 定义FlowReducer
+
+```java
+public class FlowCountSortReducer extends Reducer<FlowBean,Text,Text,FlowBean> {
+    @Override
+    protected void reduce(FlowBean key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
+        for (Text value : values) {
+            context.write(value, key);
+        }
+    }
+}
+```
+
+##### Step 4: 程序main函数入口
+
+```java
+public class JobMain extends Configured  implements Tool {
+    @Override
+    public int run(String[] strings) throws Exception {
+        //创建一个任务对象
+        Job job = Job.getInstance(super.getConf(), "mapreduce_flowcountsort");
+
+        //打包放在集群运行时，需要做一个配置
+        job.setJarByClass(JobMain.class);
+        //第一步:设置读取文件的类: K1 和V1
+        job.setInputFormatClass(TextInputFormat.class);
+        TextInputFormat.addInputPath(job, new Path("hdfs://node01:8020/out/flowcount_out"));
+
+        //第二步：设置Mapper类
+        job.setMapperClass(FlowCountSortMapper.class);
+        //设置Map阶段的输出类型: k2 和V2的类型
+        job.setMapOutputKeyClass(FlowBean.class);
+        job.setMapOutputValueClass(Text.class);
+
+        //第三,四，五，六步采用默认方式(分区，排序，规约，分组)
+
+
+        //第七步 ：设置文的Reducer类
+        job.setReducerClass(FlowCountSortReducer.class);
+        //设置Reduce阶段的输出类型
+        job.setOutputKeyClass(Text.class);
+        job.setOutputValueClass(FlowBean.class);
+
+        //设置Reduce的个数
+
+        //第八步:设置输出类
+        job.setOutputFormatClass(TextOutputFormat.class);
+        //设置输出的路径
+        TextOutputFormat.setOutputPath(job, new Path("hdfs://node01:8020/out/flowcountsort_out"));
+
+
+        boolean b = job.waitForCompletion(true);
+        return b?0:1;
+
+    }
+    public static void main(String[] args) throws Exception {
+        Configuration configuration = new Configuration();
+
+        //启动一个任务
+        int run = ToolRunner.run(configuration, new JobMain(), args);
+        System.exit(run);
+    }
+
+}
+
+```
+
+### 需求三: 手机号码分区
+
+在需求一的基础上，继续完善，将不同的手机号分到不同的数据文件的当中去，需要自定义分区来实现，这里我们自定义来模拟分区，将以下数字开头的手机号进行分开
+
+```text
+135 开头数据到一个分区文件
+136 开头数据到一个分区文件
+137 开头数据到一个分区文件
+其他分区
+```
+
+##### 自定义分区
+
+```java
+public class FlowPartition extends Partitioner<Text,FlowBean> {
+    @Override
+    public int getPartition(Text text, FlowBean flowBean, int i) {
+        String line = text.toString();
+        if (line.startsWith("135")){
+            return 0;
+        }else if(line.startsWith("136")){
+            return 1;
+        }else if(line.startsWith("137")){
+            return 2;
+        }else{
+            return 3;
+        }
+    }
+}
+```
+
+##### 作业运行设置
+
+```java
+job.setPartitionerClass(FlowPartition.class);
+ job.setNumReduceTasks(4);
+```
+
+##### 修改输入输出路径, 并放入集群运行
+
+```java
+TextInputFormat.addInputPath(job,new Path("hdfs://node01:8020/partition_flow/"));
+TextOutputFormat.setOutputPath(job,new Path("hdfs://node01:8020/partition_out"));
 ```

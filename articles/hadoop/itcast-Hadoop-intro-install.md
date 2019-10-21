@@ -699,6 +699,9 @@ bin/hdfs namenode -format
 sbin/start-dfs.sh
 sbin/start-yarn.sh
 sbin/mr-jobhistory-daemon.sh start historyserver
+
+# 停止命令就是start修改为stop，注意需要删除上面创建的hadoopDatas内容
+
 ```
 
 三个端口查看界面
