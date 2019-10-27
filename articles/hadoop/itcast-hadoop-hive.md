@@ -1976,3 +1976,4 @@ set hive.mapred.reduce.tasks.speculative.execution=true;
 ~~~
 
 关于调优这些推测执行变量，还很难给一个具体的建议。如果用户对于运行时的偏差非常敏感的话，那么可以将这些功能关闭掉。如果用户因为输入数据量很大而需要执行长时间的map或者Reduce task的话，那么启动推测执行造成的浪费是非常巨大大。
+
