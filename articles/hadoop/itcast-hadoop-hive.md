@@ -605,13 +605,11 @@ create external table score4(s_id string, c_id string,s_score int) partitioned b
 msck  repair   table  score4;
 ~~~
 
+#### 3.2.6 分桶表操作
 
+分桶，就是将数据按照指定的字段进行划分到多个文件当中去,[分桶就是MapReduce中的分区]().
 
-####3.2.6 分桶表操作
-
- 分桶，就是将数据按照指定的字段进行划分到多个文件当中去,[分桶就是MapReduce中的分区]().
-
-`开启 Hive 的分桶功能`
+`开启 Hive 的分桶功能（在hive命令行操作）`
 
 ```sql
 set hive.enforce.bucketing=true;
@@ -651,9 +649,7 @@ load data local inpath '/export/servers/hivedatas/course.csv' into table course_
 insert overwrite table course select * from course_common cluster by(c_id);
 ```
 
-
-
-###3.3 修改表结构
+### 3.3 修改表结构
 
 [重命名:]()
 
@@ -693,12 +689,6 @@ alter table score5 change column mysco mysconew int;
 drop table score5;
 ```
 
-
-
-
-
-
-
 1.8. hive表中加载数据
 
 直接向分区表中插入数据
@@ -724,10 +714,6 @@ load data local inpath '/export/servers/hivedatas/score.csv' overwrite into tabl
 create table score4 like score;
 insert overwrite table score4 partition(month = '201806') select s_id,c_id,s_score from score;
 ```
-
-
-
-
 
 ## 4. Hive 查询语法
 
@@ -774,8 +760,6 @@ select s_id ,c_id from score;
 ```sql
 select s_id as myid ,c_id from score;
 ```
-
-
 
 ### 4.3. 常用函数
 
@@ -885,19 +869,19 @@ _ 代表一个字符。
 
 2. 案例实操
 
-   1. 查找以8开头的所有成绩
+   2.1. 查找以8开头的所有成绩
 
    ```sql
    	select * from score where s_score like '8%';
    ```
 
-   1. 查找第二个数值为9的所有成绩数据
+   2.2. 查找第二个数值为9的所有成绩数据
 
    ```sql
    select * from score where s_score like '_9%';
    ```
 
-   1. 查找s_id中含1的数据
+   2.3. 查找s_id中含1的数据
 
    ```sql
    select * from score where s_id rlike '[1]';  #  like '%1%'
@@ -970,8 +954,6 @@ select s_id ,max(s_score) from score group by s_id;
    select s_id ,avg(s_score) avgscore from score group by s_id having avgscore > 85;
    ```
 
-
-
 ### 4.9. JOIN 语句
 
 #### 4.9.1. 等值 JOIN
@@ -1041,8 +1023,6 @@ on s.s_id = stu.s_id;
 ```
 
 大多数情况下，Hive会对每对JOIN连接对象启动一个MapReduce任务。本例中会首先启动一个MapReduce job对表techer和表course进行连接操作，然后会再启动一个MapReduce job将第一个MapReduce job的输出和表score;进行连接操作。
-
-
 
 ### 4.10. 排序
 
@@ -1149,8 +1129,6 @@ select * from score cluster by s_id;
 select * from score distribute by s_id sort by s_id;
 ```
 
-
-
 ## 5.Hive Shell参数
 
 ### **5.1 Hive命令行**
@@ -1167,15 +1145,13 @@ bin/hive [-hiveconf x=y]* [<-i filename>]* [<-f filename>|<-e query-string>] [-S
 
 2、 `-e从命令行执行指定的HQL` 
 
-3、 `-f 执行HQL脚本` 
+3、 `-f执行HQL脚本` 
 
 4、 -v 输出执行的HQL语句到控制台 
 
 5、 -p <port> connect to Hive Server on port number 
 
 6、 -hiveconf x=y Use this to set hive/hadoop configuration variables.  设置hive运行时候的参数配置
-
-
 
 ### 5.2 Hive参数配置方式
 
@@ -1198,17 +1174,13 @@ bin/hive [-hiveconf x=y]* [<-i filename>]* [<-f filename>|<-e query-string>] [-S
 
 配置文件的设定对本机启动的所有Hive进程都有效。
 
- 
-
 `命令行参数：`启动Hive（客户端或Server方式）时，可以在命令行添加-hiveconf param=value来设定参数，例如：
 
 ~~~sql
 bin/hive -hiveconf hive.root.logger=INFO,console
 ~~~
 
- 这一设定对本次启动的Session（对于Server方式启动，则是所有请求的Sessions）有效。
-
- 
+这一设定对本次启动的Session（对于Server方式启动，则是所有请求的Sessions）有效。
 
 `参数声明`：可以在HQL中使用SET关键字设定参数，例如：
 
@@ -1221,10 +1193,6 @@ set mapred.reduce.tasks=100;
 上述三种设定方式的优先级依次递增。即参数声明覆盖命令行参数，命令行参数覆盖配置文件设定。注意某些系统级的参数，例如log4j相关的设定，必须用前两种方式设定，因为那些参数的读取在Session建立以前已经完成了。
 
 [参数声明  >   命令行参数   >  配置文件参数（hive）]()
-
- 
-
-
 
 ## 6. Hive 函数
 
@@ -1257,25 +1225,27 @@ https://cwiki.apache.org/confluence/display/Hive/LanguageManual+UDF
   4:常用内置函数
 
 ```sql
-#字符串连接函数： concat 
-  select concat('abc','def’,'gh');
-#带分隔符字符串连接函数： concat_ws 
-  select concat_ws(',','abc','def','gh');
-#cast类型转换
-  select cast(1.5 as int);
-#get_json_object(json 解析函数，用来处理json，必须是json格式)
-   select get_json_object('{"name":"jack","age":"20"}','$.name');
-#URL解析函数
-   select parse_url('http://facebook.com/path1/p.php?k1=v1&k2=v2#Ref1', 'HOST');
-#explode：把map集合中每个键值对或数组中的每个元素都单独生成一行的形式
-                
+--字符串连接函数： concat 
+select concat('abc','def’,'gh');
+
+--带分隔符字符串连接函数： concat_ws
+select concat_ws(',','abc','def','gh');
+
+--cast类型转换
+select cast(1.5 as int);
+
+--get_json_object(json 解析函数，用来处理json，必须是json格式)
+select get_json_object('{"name":"jack","age":"20"}','$.name');
+
+--URL解析函数
+select parse_url('http://facebook.com/path1/p.php?k1=v1&k2=v2#Ref1', 'HOST');
+
+--explode：把map集合中每个键值对或数组中的每个元素都单独生成一行的形式     
 ```
-
-
 
 ### 6.2. 自定义函数
 
-####6.2.1 概述:
+#### 6.2.1 概述:
 
 1. Hive 自带了一些函数，比如：max/min等，当Hive提供的内置函数无法满足你的业务处理需要时，此时就可以考虑使用用户自定义函数(UDF).
 2. 根据用户自定义函数类别分为以下三种：
@@ -1294,7 +1264,7 @@ https://cwiki.apache.org/confluence/display/Hive/LanguageManual+UDF
    1. UDF必须要有返回类型，可以返回null，但是返回类型不能为void；
    2. UDF中常用Text/LongWritable等类型，不推荐使用java类型；
 
-####6.2.2 UDF 开发实例
+#### 6.2.2 UDF 开发实例
 
 ##### Step 1 创建 Maven 工程
 
@@ -1314,20 +1284,20 @@ https://cwiki.apache.org/confluence/display/Hive/LanguageManual+UDF
     </dependency>
 </dependencies>
 
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.0</version>
-                <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
-                    <encoding>UTF-8</encoding>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
+<build>
+    <plugins>
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <version>3.0</version>
+            <configuration>
+                <source>1.8</source>
+                <target>1.8</target>
+                <encoding>UTF-8</encoding>
+            </configuration>
+        </plugin>
+    </plugins>
+</build>
 ```
 
 ##### Step 2 开发 Java 类集成 UDF
@@ -1343,7 +1313,6 @@ public class MyUDF  extends UDF{
         return  new Text("");
     }
 }
-
 ```
 
 ##### Step 3 项目打包，并上传到hive的lib目录下
@@ -1377,13 +1346,11 @@ create temporary function my_upper as 'cn.itcast.udf.ItcastUDF';
 select my_upper('abc');
 ```
 
-
-
 ## 7.hive的数据压缩
 
 在实际工作当中，hive当中处理的数据，一般都需要经过压缩，前期我们在学习hadoop的时候，已经配置过hadoop的压缩，我们这里的hive也是一样的可以使用压缩来节省我们的MR处理的网络带宽
 
-### **7.1 **MR支持的压缩编码
+### 7.1MR支持的压缩编码
 
 | 压缩格式 | 工具  | 算法    | 文件扩展名 | 是否可切分 |
 | -------- | ----- | ------- | ---------- | ---------- |
@@ -1430,13 +1397,11 @@ On a single core of a Core i7 processor in 64-bit mode, Snappy compresses at abo
 | mapreduce.output.fileoutputformat.compress.codec  | org.apache.hadoop.io.compress. DefaultCodec                  | reducer输出 | 使用标准工具或者编解码器，如gzip和bzip2      |
 | mapreduce.output.fileoutputformat.compress.type   | RECORD                                                       | reducer输出 | SequenceFile输出使用的压缩类型：NONE和BLOCK  |
 
- 
-
 ### **7.3 开启Map**输出阶段压缩
 
 开启map输出阶段压缩可以减少job中map和Reduce task间数据传输量。具体配置如下：
 
-**案例实操：**
+**案例实操（在hive控制台执行）：**
 
 1）开启hive中间传输数据压缩功能
 
@@ -1466,7 +1431,7 @@ select count(1) from score;
 
 当Hive将输出写入到表中时，输出内容同样可以进行压缩。属性hive.exec.compress.output控制着这个功能。用户可能需要保持默认设置文件中的默认值false，这样默认的输出就是非压缩的纯文本文件了。用户可以通过在查询语句或执行脚本中设置这个值为true，来开启输出结果压缩功能。
 
-**案例实操**：
+**案例实操（在hive控制台执行）**：
 
 1）开启hive最终输出数据压缩功能
 
@@ -1517,7 +1482,7 @@ Hive支持的存储数的格式主要有：TEXTFILE（行式存储） 、SEQUENC
 
 `ORC和PARQUET是基于列式存储的。`
 
-###8.2 常用数据存储格式
+### 8.2 常用数据存储格式
 
 `TEXTFILE格式`
 
@@ -1533,8 +1498,6 @@ Orc (Optimized Row Columnar)是hive 0.11版里引入的新的存储格式。
 + [rowData]() :真正的数据存储
 + [StripFooter]()：stripe的元数据信息
 
-
-
 ![img](assets-itcast-hadoop-hive/wps2.jpg) 
 
 `PARQUET格式`
@@ -1548,12 +1511,9 @@ Parquet文件是以二进制方式存储的，所以是不可以直接读取的�
 ![img](assets-itcast-hadoop-hive/wps3.jpg)
 
 
+## **9. **文件存储格式与数据压缩结合
 
-
-
-##**9. **文件存储格式与数据压缩结合
-
-###9.1 压缩比和查询速度对比
+### 9.1 压缩比和查询速度对比
 
 `1）TextFile`
 
@@ -1585,7 +1545,7 @@ load data local inpath '/export/servers/hivedatas/log.data' into table log_text 
 dfs -du -h /user/hive/warehouse/myhive.db/log_text;
 ~~~
 
-
+TextFile没有做数据压缩，所以数据大小和原文件大小一样
 
 `2）ORC`
 
@@ -1617,7 +1577,7 @@ insert into table log_orc select * from log_text ;
 dfs -du -h /user/hive/warehouse/myhive.db/log_orc;
 ~~~
 
-
+ORC格式存储有压缩，表数据大小变小
 
 `3）Parquet`
 
@@ -1649,11 +1609,11 @@ insert into table log_parquet select * from log_text ;
 dfs -du -h /user/hive/warehouse/myhive.db/log_parquet;
 ~~~
 
+Parquet存储方式也有压缩，但是比ORC方式压缩比低
+
 [存储文件的压缩比总结：]()
 
 **ORC >  Parquet >  textFile**
-
-
 
 `4)存储文件的查询速度测试：`
 
@@ -1675,15 +1635,11 @@ hive (default)> select count(*) from log_parquet;
 
 Time taken: 22.922 seconds, Fetched: 1 row(s)
 
-
-
 [存储文件的查询速度总结：]()
 
 **ORC > TextFile > Parquet**
 
- 
-
-###9.2 ORC存储指定压缩方式
+### 9.2 ORC存储指定压缩方式
 
 官网：<https://cwiki.apache.org/confluence/display/Hive/LanguageManual+ORC>
 
@@ -1729,8 +1685,6 @@ insert into table log_orc_none select * from log_text ;
 dfs -du -h /user/hive/warehouse/myhive.db/log_orc_none;
 ~~~
 
-
-
 `2）创建一个SNAPPY压缩的ORC存储方式`
 
 （1）建表语句
@@ -1761,11 +1715,9 @@ insert into table log_orc_snappy select * from log_text ;
 dfs -du -h /user/hive/warehouse/myhive.db/log_orc_snappy ;
 ~~~
 
-###9.3 存储方式和压缩总结：
+### 9.3 存储方式和压缩总结：
 
-​	在实际的项目开发当中，hive表的数据存储格式一般选择：[orc或parquet。压缩方式一般选择snappy]()。
-
-
+在实际的项目开发当中，hive表的数据存储格式一般选择：[orc或parquet。压缩方式一般选择snappy]()。
 
 ## 10.hive调优
 
@@ -1795,7 +1747,7 @@ select s_score from score;
 select s_score from score limit 3;
 ~~~
 
-###10.2 本地模式
+### 10.2 本地模式
 
 大多数的Hadoop Job是需要Hadoop提供的完整的可扩展性来处理大数据集的。不过，有时Hive的输入数据量是非常小的。在这种情况下，为查询触发执行任务时消耗可能会比实际job的执行时间要多的多。对于大多数这种情况，Hive可以通过本地模式在单台机器上处理所有的任务。对于小数据集，执行时间可以明显被缩短。
 
@@ -1817,7 +1769,7 @@ set hive.exec.mode.local.auto=false;
 select * from score cluster by s_id;
 ~~~
 
-###10.3 MapJoin
+### 10.3 MapJoin
 
 如果不指定MapJoin或者不符合MapJoin的条件，那么Hive解析器会在Reduce阶段完成join,容易发生数据倾斜。可以用MapJoin把小表全部加载到内存在map端进行join，避免reducer处理。
 
@@ -1835,11 +1787,9 @@ set hive.auto.convert.join = true;
 set hive.mapjoin.smalltable.filesize=25123456;
 ~~~
 
+### 10.4 Group By
 
-
-###10.4 Group By
-
- 默认情况下，Map阶段同一Key数据分发给一个reduce，当一个key数据过大时就倾斜了。并不是所有的聚合操作都需要在Reduce端完成，很多聚合操作都可以先在Map端进行部分聚合，最后在Reduce端得出最终结果。
+默认情况下，Map阶段同一Key数据分发给一个reduce，当一个key数据过大时就倾斜了。并不是所有的聚合操作都需要在Reduce端完成，很多聚合操作都可以先在Map端进行部分聚合，最后在Reduce端得出最终结果。
 
 开启Map端聚合参数设置
 
@@ -1861,13 +1811,13 @@ set hive.map.aggr = true;
   set hive.groupby.skewindata = true;
 ~~~
 
- 当选项设定为 true，生成的查询计划会有两个MR Job。
+当选项设定为 true，生成的查询计划会有两个MR Job。
 
 第一个MR Job中，Map的输出结果会随机分布到Reduce中，每个Reduce做部分聚合操作，并输出结果，这样处理的结果是相同的Group By Key有可能被分发到不同的Reduce中，从而达到负载均衡的目的；
 
 第二个MR Job再根据预处理的数据结果按照Group By Key分布到Reduce中（这个过程可以保证相同的Group By Key被分布到同一个Reduce中），最后完成最终的聚合操作。
 
-###10.5 Count(distinct)
+### 10.5 Count(distinct)
 
 数据量小的时候无所谓，数据量大的情况下，由于COUNT DISTINCT操作需要用一个Reduce Task来完成，这一个Reduce需要处理的数据量太大，就会导致整个Job很难完成，一般COUNT DISTINCT使用先GROUP BY再COUNT的方式替换：
 
@@ -1878,17 +1828,17 @@ select count(s_id) from (select id from score group by s_id) a;
 
 虽然会多用一个Job来完成，但在数据量大的情况下，这个绝对是值得的。
 
-###10.6 笛卡尔积
+### 10.6 笛卡尔积
 
 尽量避免笛卡尔积，即避免join的时候不加on条件，或者无效的on条件，Hive只能使用1个reducer来完成笛卡尔积。
 
-###10.7 **动态分区**调整
+### 10.7 **动态分区**调整
 
 往hive分区表中插入数据时，hive提供了一个动态分区功能，其可以基于查询参数的位置去推断分区的名称，从而建立分区。使用Hive的动态分区，需要进行相应的配置。
 
 Hive的动态分区是以第一个表的分区规则，来对应第二个表的分区规则，将第一个表的所有分区，全部拷贝到第二个表中来，第二个表在加载数据的时候，不需要指定分区了，直接用第一个表的分区即可
 
-####10.7.1 开启动态分区参数设置
+#### 10.7.1 开启动态分区参数设置
 
 （1）开启动态分区功能（默认true，开启）
 
@@ -1916,7 +1866,7 @@ set hive.exec.max.dynamic.partitions.pernode=100
 
 （5）整个MR Job中，最大可以创建多少个HDFS文件。
 
-​	在linux系统当中，每个linux用户最多可以开启1024个进程，每一个进程最多可以打开2048个文件，即持有2048个文件句柄，下面这个值越大，就可以打开文件句柄越大
+在linux系统当中，每个linux用户最多可以开启1024个进程，每一个进程最多可以打开2048个文件，即持有2048个文件句柄，下面这个值越大，就可以打开文件句柄越大
 
 ~~~sql
 set hive.exec.max.created.files=100000;
@@ -1928,9 +1878,7 @@ set hive.exec.max.created.files=100000;
 set hive.error.on.empty.partition=false;
 ~~~
 
-
-
-####10.7.2 案例操作
+#### 10.7.2 案例操作
 
 需求：将ori中的数据按照时间(如：20111231234568)，插入到目标表ori_partitioned的相应分区中。
 
@@ -1970,13 +1918,11 @@ FROM ori_partitioned;
 show partitions ori_partitioned_target; 
 ~~~
 
-
-
 ### 10.8 并行执行
 
 Hive会将一个查询转化成一个或者多个阶段。这样的阶段可以是MapReduce阶段、抽样阶段、合并阶段、limit阶段。或者Hive执行过程中可能需要的其他阶段。默认情况下，Hive一次只会执行一个阶段。不过，某个特定的job可能包含众多的阶段，而这些阶段可能并非完全互相依赖的，也就是说有些阶段是可以并行执行的，这样可能使得整个job的执行时间缩短。不过，如果有更多的阶段可以并行执行，那么job可能就越快完成。
 
-​	通过设置参数hive.exec.parallel值为true，就可以开启并发执行。不过，在共享集群中，需要注意下，如果job中并行阶段增多，那么集群利用率就会增加。
+通过设置参数hive.exec.parallel值为true，就可以开启并发执行。不过，在共享集群中，需要注意下，如果job中并行阶段增多，那么集群利用率就会增加。
 
 ~~~sql
 set hive.exec.parallel = true;
@@ -1988,7 +1934,7 @@ set hive.exec.parallel = true;
 
 Hive提供了一个严格模式，可以防止用户执行那些可能意向不到的不好的影响的查询。
 
-​	通过设置属性hive.mapred.mode值为默认是非严格模式nonstrict 。开启严格模式需要修改hive.mapred.mode值为strict，开启严格模式可以禁止3种类型的查询。
+通过设置属性hive.mapred.mode值为默认是非严格模式nonstrict 。开启严格模式需要修改hive.mapred.mode值为strict，开启严格模式可以禁止3种类型的查询。
 
 ~~~sql
 set hive.mapred.mode = strict; #开启严格模式
@@ -2030,5 +1976,3 @@ set hive.mapred.reduce.tasks.speculative.execution=true;
 ~~~
 
 关于调优这些推测执行变量，还很难给一个具体的建议。如果用户对于运行时的偏差非常敏感的话，那么可以将这些功能关闭掉。如果用户因为输入数据量很大而需要执行长时间的map或者Reduce task的话，那么启动推测执行造成的浪费是非常巨大大。
-
-### 
