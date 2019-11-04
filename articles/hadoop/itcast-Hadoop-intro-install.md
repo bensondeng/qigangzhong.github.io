@@ -21,8 +21,6 @@
 
 ![1558225014064](assets-hadoop-intro-install/1558225014064.png) 
 
-  
-
 ### 2、hadoop的历史版本和发行版公司
 
 ##### 2.1 Hadoop历史版本
@@ -31,7 +29,7 @@
 
 2.x版本系列：架构产生重大变化，引入了yarn平台等许多新特性
 
-3.x版本系列:  加入多namenoode新特性
+3.x版本系列:  加入多namenode新特性
 
 ##### 2.2 Hadoop三大发行版公司
 
@@ -47,23 +45,17 @@ apache所有软件的下载地址（包括各种历史版本）：
 
 <http://archive.apache.org/dist/>
 
-* 免费开源版本hortonWorks：
+* 免费开源版本hortonworks：
 
 <https://hortonworks.com/>
 
 hortonworks主要是雅虎主导Hadoop开发的副总裁，带领二十几个核心成员成立Hortonworks，核心产品软件HDP（ambari），HDF免费开源，并且提供一整套的web管理界面，供我们可以通过web界面管理我们的集群状态，web管理界面软件HDF网址（<http://ambari.apache.org/>）
-
- 
 
 * 软件收费版本ClouderaManager:
 
 <https://www.cloudera.com/>
 
 cloudera主要是美国一家大数据公司在apache开源hadoop的版本上，通过自己公司内部的各种补丁，实现版本之间的稳定运行，大数据生态圈的各个版本的软件都提供了对应的版本，解决了版本的升级困难，版本兼容性等各种问题
-
- 
-
-
 
 ### 3、hadoop的架构模型
 
@@ -141,8 +133,6 @@ ResourceManager：接收用户的计算请求任务，并负责集群的资源�
 
 NodeManager：负责执行主节点ResourceManager分配的任务
 
- 
-
 第四种：NameNode与ResourceManager高可用架构模型
 
 ![1558232995675](assets-hadoop-intro-install/1558232995675.png)	
@@ -160,8 +150,6 @@ DataNode：从节点，用于数据的存储
 ResourceManager：Yarn平台的主节点，主要用于接收各种任务，通过两个，构建成高可用
 
 NodeManager：Yarn平台的从节点，主要用于处理ResourceManager分配的任务
-
-
 
 ### 4、appache版本hadoop重新编译
 
@@ -285,12 +273,12 @@ vim settings.xml
 添加一个我们阿里云的镜像地址，会让我们下载jar包更快
 
 ```xml
- <mirror>
-      <id>alimaven</id>
-      <name>aliyun maven</name>
-      <url>http://maven.aliyun.com/nexus/content/groups/public/</url>
-      <mirrorOf>central</mirrorOf>
-    </mirror>
+<mirror>
+	<id>alimaven</id>
+	<name>aliyun maven</name>
+	<url>http://maven.aliyun.com/nexus/content/groups/public/</url>
+	<mirrorOf>central</mirrorOf>
+</mirror>
 ```
 
 ![img](assets-hadoop-intro-install/wps7.jpg) 
@@ -393,8 +381,6 @@ cd  /export/servers/hadoop-2.7.5
 | dataNode          | 是              | 是              | 是              |
 | ResourceManager   | 是              | 否              | 否              |
 | NodeManager       | 是              | 是              | 是              |
-
- 
 
 #### 第一步：上传apache hadoop包并解压
 

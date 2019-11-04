@@ -47,7 +47,7 @@ HDFS由四部分组成，[HDFS Client]()、[NameNod]()[e]()、[DataNode]()和[Se
 
 ![](http://ppw6n93dt.bkt.clouddn.com/9f9181e01371fb27c474a30339d164bd.png)	
 
- 　**1、Client：就是客户端。
+ 　**1、Client：就是客户端。**
 
 - 文件切分。文件上传 HDFS 的时候，Client 将文件切分成 一个一个的Block，然后进行存储。
 - 与 NameNode 交互，获取文件的位置信息。
@@ -321,8 +321,6 @@ hdfs dfsadmin -setQuota 2  dir      # 给该文件夹下面设置最多上传两
 ~~~shell
 hdfs dfsadmin -clrQuota /user/root/dir  # 清除文件数量限制
 ~~~
-
-
 
 #### 7.1.2、空间**大小限额**
 
