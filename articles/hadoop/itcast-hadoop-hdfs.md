@@ -301,15 +301,18 @@ hdfs  dfs  -chown  -R hadoop:hadoop  /install.log
 
 ### 7. 1、HDFS文件限额配置
 
-​	 在多人共用HDFS的环境下，配置设置非常重要。特别是在Hadoop处理大量资料的环境，如果没有配额管理，很容易把所有的空间用完造成别人无法存取。Hdfs的配额设定是针对目录而不是针对账号，可以 让每个账号仅操作某一个目录，然后对目录设置配置。 
+在多人共用HDFS的环境下，配置设置非常重要。特别是在Hadoop处理大量资料的环境，如果没有配额管理，很容易把所有的空间用完造成别人无法存取。Hdfs的配额设定是针对目录而不是针对账号，可以 让每个账号仅操作某一个目录，然后对目录设置配置。 
 
-​    hdfs文件的限额配置允许我们以文件个数，或者文件大小来限制我们在某个目录下上传的文件数量或者文件内容总量，以便达到我们类似百度网盘网盘等限制每个用户允许上传的最大的文件的量。
+hdfs文件的限额配置允许我们以文件个数，或者文件大小来限制我们在某个目录下上传的文件数量或者文件内容总量，以便达到我们类似百度网盘网盘等限制每个用户允许上传的最大的文件的量。
 
 ~~~shell
- hdfs dfs -count -q -h /user/root/dir1  #查看配额信息
+hdfs dfs -count -q -h /user/root/dir1  #查看配额信息
 ~~~
 
-所谓的空间限额
+```bash
+#文件数限制 | 可用文件数 | 空间限额大小（字节）| 可用空间大小（字节）|目录数  |  文件数  |         总大小/文件或目录名称
+none             inf            none             inf            1            1                 13 /mydir
+```
 
 #### 7.1.1、数量限额
 
@@ -385,7 +388,6 @@ hdfs dfs -text  /benchmarks/TestDFSIO/io_write/part-00000
 
 ~~~shell
 hadoop jar /export/servers/hadoop-2.7.5/share/hadoop/mapreduce/hadoop-mapreduce-client-jobclient-2.7.5.jar  TestDFSIO -read -nrFiles 10 -fileSize 10MB
-
 ~~~
 
 查看读取果
@@ -402,7 +404,7 @@ hadoop jar /export/servers/hadoop-2.7.5/share/hadoop/mapreduce/hadoop-mapreduce-
 
 ## 9. HDFS 文件写入过程
 
-![img](https://img-blog.csdn.net/20180716221908696?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3doZHhqYnc=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70) 
+![img](https://img-blog.csdn.net/20180716221908696?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3doZHhqYnc=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70)
 
 1. Client 发起文件上传请求, 通过 RPC 与 NameNode 建立通讯, NameNode 检查目标文件是否已存在, 父目录是否存在, 返回是否可以上传
 
@@ -419,8 +421,6 @@ hadoop jar /export/servers/hadoop-2.7.5/share/hadoop/mapreduce/hadoop-mapreduce-
 6. 数据被分割成一个个 packet 数据包在 pipeline 上依次传输, 在 pipeline 反方向上, 逐个发送 ack（命令正确应答）, 最终由 pipeline 中第一个 DataNode 节点 A 将 pipelineack 发送给 Client
 
 7. 当一个 block 传输完成之后, Client 再次请求 NameNode 上传第二个 block 到服务 1
-
-   
 
 ## 10.HDFS 文件读取过程
 
@@ -447,8 +447,8 @@ hadoop jar /export/servers/hadoop-2.7.5/share/hadoop/mapreduce/hadoop-mapreduce-
 </property>
 <property>
      <name>dfs.namenode.edits.dir</name>
-     <value>file:///export/servers/hadoop-2.7.5/hadoopDatas/nn/edits</value
-</property>>
+     <value>file:///export/servers/hadoop-2.7.5/hadoopDatas/nn/edits</value>
+</property>
 ```
 
 #### 11.1 FsImage 和 Edits 详解
@@ -478,8 +478,6 @@ hdfs oiv -i fsimage_0000000000000000864 -p XML -o hello.xml
 cd /export/servers/hadoop2.7.5/hadoopDatas/namenodeDatas
 hdfs oev -i  edits_0000000000000000865-0000000000000000866 -p XML -o myedit.xml 
 ```
-
-
 
 #### 11.4 SecondaryNameNode 如何辅助管理 fsimage 与 edits 文件?
 
