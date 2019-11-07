@@ -43,7 +43,7 @@ HDFS采用追加（append-only）的方式写入数据。[不支持文件任意o
 
  HDFS是一个`主/从（Mater/Slave）体系结构`，
 
-HDFS由四部分组成，[HDFS Client]()、[NameNod]()[e]()、[DataNode]()和[Secondary NameNode]()。
+HDFS由四部分组成，[HDFS Client]()、[NameNode]()、[DataNode]()和[Secondary NameNode]()。
 
 ![](http://ppw6n93dt.bkt.clouddn.com/9f9181e01371fb27c474a30339d164bd.png)	
 

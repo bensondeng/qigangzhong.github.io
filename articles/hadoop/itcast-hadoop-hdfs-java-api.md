@@ -155,7 +155,7 @@ public void getFileSystem1() throws IOException {
 ```java
 @Test
 public void getFileSystem2() throws  Exception{
-    FileSystem fileSystem = FileSystem.get(new URI("hdfs://node01:8020"), new       Configuration());
+    FileSystem fileSystem = FileSystem.get(new URI("hdfs://node01:8020"), new Configuration());
     System.out.println("fileSystem:"+fileSystem);
 }
 ```
@@ -234,8 +234,6 @@ public void putData() throws  Exception{
     fileSystem.close();
 }
 ```
-
-
 
 #### 1.4.6 hdfs访问权限控制
 
